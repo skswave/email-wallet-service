@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email DATA_WALLET Dashboard</title>
+    <style>
+        :root {
+            --primary: #2d5016;
+            --secondary: #4a7c59;
+            --accent: #5d8a66;
+            --light-green: #76a56f;
+            --dark: #1a2f0a;
+            --light: #ffffff;
+            --background: #f8fdf6;
+            --gray: #666666;
+            --light-gray: #f5f5f5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header with Mobile Navigation */
+        header {
+            background: var(--light);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+            background: rgba(45, 80, 22, 0.1);
+        }
+
+        .nav-menu a.active {
+            color: var(--light);
+            background: var(--primary);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+            padding: 8px;
+            z-index: 1001;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: var(--light);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                gap: 1rem;
+            }
+
+            .nav-menu.active {
+                display: flex !important;
+            }
+
+            .mobile-menu-toggle {
+                display: block !important;
+            }
+
+            .nav-menu a {
+                display: block;
+                text-align: center;
+            }
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--light);
+            text-align: center;
+            padding: 120px 20px 50px;
+            margin-top: 80px;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Status Grid */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .status-card {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            border-left: 5px solid var(--primary);
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-card h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-card .icon {
+            margin-right: 10px;
+            font-size: 1.5rem;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .metric-label {
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .metric-value {
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-connected {
+            background-color: var(--success);
+        }
+
+        .status-warning {
+            background-color: var(--warning);
+        }
+
+        .status-error {
+            background-color: var(--error);
+        }
+
+        /* Email Processing Section */
+        .email-processing-section {
+            background: var(--light);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .refresh-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: var(--dark);
+        }
+
+        .email-form {
+            background: var(--background);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-btn {
+            background: var(--success);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--primary);
+        }
+
+        .submit-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .email-queue {
+            margin-top: 20px;
+        }
+
+        .email-item {
+            background: var(--background);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .email-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .email-subject {
+            font-weight: bold;
+            color: var(--dark);
+        }
+
+        .email-status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-processing {
+            background: rgba(45, 80, 22, 0.1);
+            color: var(--primary);
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .email-details {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .wallet-info {
+            background: rgba(45, 80, 22, 0.05);
+            border: 1px solid rgba(45, 80, 22, 0.2);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .wallet-address {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            background: var(--light);
+            padding: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            border: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .page-header {
+                padding: 100px 20px 30px;
+            }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .section-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: stretch;
+            }
+
+            .refresh-btn {
+                align-self: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">📧 Email DATA_WALLET</a>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/register.html">Register</a></li>
+                <li><a href="/dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="/authorization.html">Authorization</a></li>
+                <li><a href="/admin.html">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <h1>📧 Email DATA_WALLET Dashboard</h1>
+        <p>Monitor email processing and blockchain wallet creation</p>
+    </div>
+
+    <div class="container">
+        <!-- Status Overview -->
+        <div class="status-grid">
+            <div class="status-card">
+                <h3><span class="icon">🔗</span>Blockchain Status</h3>
+                <div class="metric">
+                    <span class="metric-label">Connection</span>
+                    <span class="metric-value">
+                        <span class="status-indicator status-connected"></span>
+                        <span id="blockchain-status">Connected</span>
+                    </span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Last Updated</span>
+                    <span class="metric-value" id="blockchain-timestamp">Loading...</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3><span class="icon">👤</span>Wallet Info</h3>
+                <div class="metric">
+                    <span class="metric-label">Registration</span>
+                    <span class="metric-value">
+                        <span class="status-indicator status-connected"></span>
+                        <span id="wallet-status">Registered</span>
+                    </span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Credits Available</span>
+                    <span class="metric-value" id="wallet-credits">60</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">MATIC Balance</span>
+                    <span class="metric-value" id="matic-balance">0.029 POL</span>
+                </div>
+            </div>
+
+            <div class="status-card">
+                <h3><span class="icon">📊</span>Processing Stats</h3>
+                <div class="metric">
+                    <span class="metric-label">Emails Processed</span>
+                    <span class="metric-value" id="emails-processed">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">DATA_WALLETs Created</span>
+                    <span class="metric-value" id="wallets-created">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Credits Used</span>
+                    <span class="metric-value" id="credits-used">0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Processing Section -->
+        <div class="email-processing-section">
+            <div class="section-header">
+                <h2 class="section-title">📬 Email Processing</h2>
+                <button class="refresh-btn" onclick="refreshStatus()">
+                    <span id="refresh-icon">🔄</span> Refresh
+                </button>
+            </div>
+
+            <!-- Test Email Form -->
+            <div class="email-form">
+                <h3 style="margin-bottom: 15px; color: var(--primary);">🧪 Test Email Processing</h3>
+                <form id="email-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div class="form-group">
+                            <label for="from-email">From Email:</label>
+                            <input type="email" id="from-email" name="from" value="demo@techcorp.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="to-email">To Email:</label>
+                            <input type="email" id="to-email" name="to" value="test@example.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="subject">Subject:</label>
+                        <input type="text" id="subject" name="subject" value="Test Email for DATA_WALLET Creation" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="body">Email Body:</label>
+                        <textarea id="body" name="body" placeholder="Enter email content..." required>This is a test email to verify the DATA_WALLET creation process. It should trigger the email processing pipeline and create a new blockchain wallet for this email data.</textarea>
+                    </div>
+                    <button type="submit" class="submit-btn" id="submit-btn">
+                        📧 Process Test Email (Cost: 4 credits)
+                    </button>
+                </form>
+            </div>
+
+            <!-- Processing Queue -->
+            <div class="email-queue">
+                <h3 style="margin-bottom: 15px; color: var(--primary);">📋 Processing Queue</h3>
+                <div id="email-queue-list">
+                    <p style="color: var(--gray); text-align: center; padding: 20px;">No emails in queue. Submit a test email above to start processing.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallet Information -->
+        <div class="wallet-info">
+            <strong>🔐 Your Wallet Address:</strong>
+            <div class="wallet-address" id="wallet-address">0x107C5655ce50AB9744Fc36A4e9935E30d4923d0b</div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = 'https://localhost:7000/api';
+        const WALLET_ADDRESS = '0x107C5655ce50AB9744Fc36A4e9935E30d4923d0b';
+
+        // State management
+        let emailQueue = [];
+        let processingStats = {
+            emailsProcessed: 0,
+            walletsCreated: 0,
+            creditsUsed: 0
+        };
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshStatus();
+            setupEmailForm();
+            updateWalletAddress();
+        });
+
+        // Mobile navigation
+        function toggleMobileMenu() {
+            const navMenu = document.getElementById('navMenu');
+            navMenu.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navMenu = document.getElementById('navMenu');
+            const toggleButton = document.querySelector('.mobile-menu-toggle');
+            
+            if (!navMenu.contains(event.target) && !toggleButton.contains(event.target)) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Close mobile menu when window is resized to desktop
+        window.addEventListener('resize', function() {
+            const navMenu = document.getElementById('navMenu');
+            if (window.innerWidth > 768) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Refresh all status information
+        async function refreshStatus() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            refreshIcon.innerHTML = '<span class="loading"></span>';
+
+            try {
+                await Promise.all([
+                    updateBlockchainStatus(),
+                    updateWalletInfo(),
+                    updateProcessingStats()
+                ]);
+            } catch (error) {
+                console.error('Error refreshing status:', error);
+                showAlert('Failed to refresh status. Please check your connection.', 'error');
+            } finally {
+                refreshIcon.innerHTML = '🔄';
+            }
+        }
+
+        // Update blockchain status
+        async function updateBlockchainStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/blockchaintest/status`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('blockchain-status').textContent = 
+                        data.isConnected ? 'Connected' : 'Disconnected';
+                    document.getElementById('blockchain-timestamp').textContent = 
+                        new Date(data.timestamp).toLocaleString();
+                } else {
+                    throw new Error('Failed to get blockchain status');
+                }
+            } catch (error) {
+                console.error('Blockchain status error:', error);
+                document.getElementById('blockchain-status').textContent = 'Error';
+            }
+        }
+
+        // Update wallet information
+        async function updateWalletInfo() {
+            try {
+                const [registrationResponse, creditsResponse] = await Promise.all([
+                    fetch(`${API_BASE}/blockchaintest/wallet/${WALLET_ADDRESS}/registered`),
+                    fetch(`${API_BASE}/blockchaintest/wallet/${WALLET_ADDRESS}/credits`)
+                ]);
+
+                if (registrationResponse.ok) {
+                    const regData = await registrationResponse.json();
+                    document.getElementById('wallet-status').textContent = 
+                        regData.isRegistered ? 'Registered' : 'Not Registered';
+                }
+
+                if (creditsResponse.ok) {
+                    const creditsData = await creditsResponse.json();
+                    document.getElementById('wallet-credits').textContent = creditsData.balance;
+                    document.getElementById('matic-balance').textContent = 
+                        `${creditsData.nativeBalance.toFixed(6)} POL`;
+                }
+            } catch (error) {
+                console.error('Wallet info error:', error);
+            }
+        }
+
+        // Update processing statistics
+        function updateProcessingStats() {
+            document.getElementById('emails-processed').textContent = processingStats.emailsProcessed;
+            document.getElementById('wallets-created').textContent = processingStats.walletsCreated;
+            document.getElementById('credits-used').textContent = processingStats.creditsUsed;
+        }
+
+        // Setup email form submission
+        function setupEmailForm() {
+            const form = document.getElementById('email-form');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                await processTestEmail();
+            });
+        }
+
+        // Process test email
+        async function processTestEmail() {
+            const submitBtn = document.getElementById('submit-btn');
+            const originalText = submitBtn.textContent;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Processing...';
+
+            try {
+                const formData = new FormData(document.getElementById('email-form'));
+                const emailData = {
+                    from: formData.get('from'),
+                    to: formData.get('to'),
+                    subject: formData.get('subject'),
+                    body: formData.get('body'),
+                    receivedDate: new Date().toISOString(),
+                    attachments: []
+                };
+
+                // Add to processing queue
+                const emailId = `email-${Date.now()}`;
+                const queueItem = {
+                    id: emailId,
+                    ...emailData,
+                    status: 'processing',
+                    timestamp: new Date()
+                };
+
+                emailQueue.unshift(queueItem);
+                updateEmailQueue();
+
+                // TODO: Replace with actual API call when email processing endpoint exists
+                // const response = await fetch(`${API_BASE}/emailprocessing/process`, {
+                //     method: 'POST',
+                //     headers: { 'Content-Type': 'application/json' },
+                //     body: JSON.stringify(emailData)
+                // });
+
+                // For now, simulate processing
+                await simulateEmailProcessing(emailId);
+
+                showAlert('Email submitted for processing! Check the queue below for status updates.', 'success');
+                
+                // Update stats
+                processingStats.emailsProcessed++;
+                processingStats.creditsUsed += 4;
+                updateProcessingStats();
+
+            } catch (error) {
+                console.error('Email processing error:', error);
+                showAlert('Failed to process email. Please try again.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        // Simulate email processing (replace with real API calls)
+        async function simulateEmailProcessing(emailId) {
+            const item = emailQueue.find(e => e.id === emailId);
+            if (!item) return;
+
+            // Simulate processing steps
+            const steps = [
+                { status: 'processing', message: 'Validating email...', delay: 1000 },
+                { status: 'processing', message: 'Creating authorization request...', delay: 2000 },
+                { status: 'processing', message: 'Waiting for user authorization...', delay: 1500 },
+                { status: 'processing', message: 'Creating DATA_WALLET on blockchain...', delay: 3000 },
+                { status: 'completed', message: 'DATA_WALLET created successfully!', delay: 500 }
+            ];
+
+            for (const step of steps) {
+                await new Promise(resolve => setTimeout(resolve, step.delay));
+                item.status = step.status;
+                item.message = step.message;
+                updateEmailQueue();
+            }
+
+            if (item.status === 'completed') {
+                processingStats.walletsCreated++;
+                updateProcessingStats();
+            }
+        }
+
+        // Update email queue display
+        function updateEmailQueue() {
+            const queueList = document.getElementById('email-queue-list');
+            
+            if (emailQueue.length === 0) {
+                queueList.innerHTML = '<p style="color: var(--gray); text-align: center; padding: 20px;">No emails in queue. Submit a test email above to start processing.</p>';
+                return;
+            }
+
+            queueList.innerHTML = emailQueue.map(email => `
+                <div class="email-item">
+                    <div class="email-item-header">
+                        <span class="email-subject">${email.subject}</span>
+                        <span class="email-status status-${email.status}">${email.status.toUpperCase()}</span>
+                    </div>
+                    <div class="email-details">
+                        <strong>From:</strong> ${email.from} → <strong>To:</strong> ${email.to}<br>
+                        <strong>Time:</strong> ${email.timestamp.toLocaleString()}
+                        ${email.message ? `<br><strong>Status:</strong> ${email.message}` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update wallet address display
+        function updateWalletAddress() {
+            document.getElementById('wallet-address').textContent = WALLET_ADDRESS;
+        }
+
+        // Show alert messages
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            
+            const form = document.querySelector('.email-form');
+            form.insertBefore(alertDiv, form.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(refreshStatus, 30000);
+    </script>
+</body>
+</html>

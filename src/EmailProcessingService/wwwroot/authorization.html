@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email DATA_WALLET Authorization - Rootz Innovation</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2d5016;
+            --secondary: #4a7c59;
+            --accent: #5d8a66;
+            --light-green: #76a56f;
+            --dark: #1a2f0a;
+            --light: #ffffff;
+            --background: #f8fdf6;
+            --gray: #666666;
+            --light-gray: #f5f5f5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Header with Mobile Navigation */
+        header {
+            background: var(--light);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+            background: rgba(45, 80, 22, 0.1);
+        }
+
+        .nav-menu a.active {
+            color: var(--light);
+            background: var(--primary);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+            padding: 8px;
+            z-index: 1001;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: var(--light);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                gap: 1rem;
+            }
+
+            .nav-menu.active {
+                display: flex !important;
+            }
+
+            .mobile-menu-toggle {
+                display: block !important;
+            }
+
+            .nav-menu a {
+                display: block;
+                text-align: center;
+            }
+        }
+
+        /* Main Content */
+        main {
+            margin-top: 80px;
+            min-height: calc(100vh - 80px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .auth-container {
+            background: var(--light);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        .auth-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 1.1em;
+        }
+
+        .email-details {
+            background: var(--background);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border-left: 4px solid var(--primary);
+            border: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        .email-details h3 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--primary);
+            min-width: 120px;
+        }
+
+        .detail-value {
+            color: var(--gray);
+            text-align: right;
+            word-break: break-all;
+        }
+
+        .cost-section {
+            background: linear-gradient(135deg, var(--accent) 0%, var(--light-green) 100%);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: var(--light);
+        }
+
+        .cost-amount {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .cost-label {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .wallet-status {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--success);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(45, 80, 22, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--background);
+            color: var(--gray);
+            border: 2px solid rgba(45, 80, 22, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(45, 80, 22, 0.1);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-message {
+            display: none;
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .error-message {
+            display: none;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .connected-address {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: var(--background);
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        @media (max-width: 600px) {
+            .auth-container {
+                padding: 25px;
+                margin: 10px;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            
+            .detail-value {
+                text-align: left;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">📧 Email DATA_WALLET</a>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/register.html">Register</a></li>
+                <li><a href="/dashboard.html">Dashboard</a></li>
+                <li><a href="/authorization.html" class="active">Authorization</a></li>
+                <li><a href="/admin.html">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="auth-container">
+            <div class="header">
+                <h1>📧 EMAIL_WALLET Authorization</h1>
+                <p>Review and authorize the creation of your EMAIL_WALLET with blockchain provenance</p>
+            </div>
+
+            <div class="wallet-status">
+                <div class="status-icon">✓</div>
+                <div>
+                    <strong>Wallet Connected:</strong>
+                    <span id="walletAddress" class="connected-address">Connecting...</span>
+                </div>
+            </div>
+
+            <div class="email-details">
+                <h3>📋 Email Details</h3>
+                
+                <div class="detail-row">
+                    <span class="detail-label">From:</span>
+                    <span class="detail-value" id="emailFrom">Loading...</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Subject:</span>
+                    <span class="detail-value" id="emailSubject">Loading...</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Received:</span>
+                    <span class="detail-value" id="emailDate">Loading...</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Size:</span>
+                    <span class="detail-value" id="emailSize">Loading...</span>
+                </div>
+                
+                <div class="detail-row">
+                    <span class="detail-label">Attachments:</span>
+                    <span class="detail-value" id="attachmentCount">Loading...</span>
+                </div>
+            </div>
+
+            <div class="cost-section">
+                <div class="cost-amount">4 CREDITS</div>
+                <div class="cost-label">Cost for EMAIL_WALLET creation with blockchain provenance</div>
+            </div>
+
+            <div class="buttons">
+                <button class="btn btn-secondary" onclick="denyAuthorization()">
+                    ❌ Deny
+                </button>
+                <button class="btn btn-primary" onclick="authorizeWalletCreation()" id="authorizeBtn">
+                    ✅ Authorize EMAIL_WALLET Creation
+                </button>
+            </div>
+
+            <div class="loading" id="loadingDiv">
+                <div class="spinner"></div>
+                <p>Processing authorization via MetaMask...</p>
+            </div>
+
+            <div class="success-message" id="successDiv">
+                <strong>✅ Authorization Successful!</strong><br>
+                Your EMAIL_WALLET has been created and will be available shortly with full blockchain provenance.
+                <br><br>
+                <strong>Transaction Hash:</strong> <span id="txHash"></span><br>
+                <a href="/dashboard.html" style="color: var(--primary); text-decoration: none; font-weight: bold;">→ View Dashboard</a>
+            </div>
+
+            <div class="error-message" id="errorDiv">
+                <strong>❌ Authorization Failed</strong><br>
+                <span id="errorText"></span>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            API_BASE_URL: '/api',
+            REQUEST_ID: new URLSearchParams(window.location.search).get('requestId') || 'demo-request-123'
+        };
+
+        let provider = null;
+        let signer = null;
+        let userAddress = null;
+
+        // Mobile navigation
+        function toggleMobileMenu() {
+            const navMenu = document.getElementById('navMenu');
+            navMenu.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navMenu = document.getElementById('navMenu');
+            const toggleButton = document.querySelector('.mobile-menu-toggle');
+            
+            if (!navMenu.contains(event.target) && !toggleButton.contains(event.target)) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Close mobile menu when window is resized to desktop
+        window.addEventListener('resize', function() {
+            const navMenu = document.getElementById('navMenu');
+            if (window.innerWidth > 768) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Initialize the page
+        async function initializePage() {
+            try {
+                if (typeof window.ethereum !== 'undefined') {
+                    provider = new ethers.BrowserProvider(window.ethereum);
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    signer = await provider.getSigner();
+                    userAddress = await signer.getAddress();
+                    
+                    document.getElementById('walletAddress').textContent = 
+                        userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                    
+                    await loadAuthorizationRequest();
+                } else {
+                    showError('MetaMask is required for EMAIL_WALLET authorization');
+                }
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showError('Failed to connect to wallet: ' + error.message);
+            }
+        }
+
+        async function loadAuthorizationRequest() {
+            try {
+                const response = await fetch(`${CONFIG.API_BASE_URL}/authorization/requests/${CONFIG.REQUEST_ID}`);
+                
+                if (response.ok) {
+                    const requestData = await response.json();
+                    updateUIWithRequestData(requestData);
+                } else {
+                    console.warn('Could not load request details, using demo data');
+                    loadDemoData();
+                }
+            } catch (error) {
+                console.warn('Error loading request details:', error);
+                loadDemoData();
+            }
+        }
+
+        function loadDemoData() {
+            document.getElementById('emailFrom').textContent = 'demo@techcorp.com';
+            document.getElementById('emailSubject').textContent = 'Q3 Financial Report - Confidential';
+            document.getElementById('emailDate').textContent = new Date().toLocaleString();
+            document.getElementById('emailSize').textContent = '2.4 MB';
+            document.getElementById('attachmentCount').textContent = '2 files';
+        }
+
+        function updateUIWithRequestData(data) {
+            if (data.emailFrom) document.getElementById('emailFrom').textContent = data.emailFrom;
+            if (data.emailSubject) document.getElementById('emailSubject').textContent = data.emailSubject;
+            if (data.emailDate) document.getElementById('emailDate').textContent = new Date(data.emailDate).toLocaleString();
+            if (data.emailSize) document.getElementById('emailSize').textContent = formatFileSize(data.emailSize);
+            if (data.attachments) {
+                document.getElementById('attachmentCount').textContent = `${data.attachments.length} files`;
+            }
+        }
+
+        async function authorizeWalletCreation() {
+            try {
+                showLoading(true);
+                disableButtons(true);
+
+                const message = CONFIG.REQUEST_ID;
+                console.log('Signing message:', message);
+
+                const signature = await signer.signMessage(message);
+                console.log('Signature received:', signature);
+
+                const authResponse = await fetch(`${CONFIG.API_BASE_URL}/authorization/authorize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        requestId: CONFIG.REQUEST_ID,
+                        signature: signature,
+                        walletAddress: userAddress
+                    })
+                });
+
+                if (authResponse.ok) {
+                    const result = await authResponse.json();
+                    showSuccess(result.transactionHash || 'Authorization completed');
+                } else {
+                    const error = await authResponse.json();
+                    throw new Error(error.message || 'Authorization failed');
+                }
+
+            } catch (error) {
+                console.error('Authorization error:', error);
+                showError(error.message || 'Authorization failed');
+            } finally {
+                showLoading(false);
+                disableButtons(false);
+            }
+        }
+
+        function denyAuthorization() {
+            if (confirm('Are you sure you want to deny this authorization? The EMAIL_WALLET will not be created.')) {
+                window.location.href = '/dashboard.html';
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingDiv').style.display = show ? 'block' : 'none';
+        }
+
+        function showSuccess(txHash) {
+            document.getElementById('txHash').textContent = txHash;
+            document.getElementById('successDiv').style.display = 'block';
+            document.getElementById('errorDiv').style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorDiv').style.display = 'block';
+            document.getElementById('successDiv').style.display = 'none';
+        }
+
+        function disableButtons(disabled) {
+            document.getElementById('authorizeBtn').disabled = disabled;
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        window.addEventListener('load', initializePage);
+    </script>
+</body>
+</html>

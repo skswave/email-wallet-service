@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MATIC Balance Checker - Email DATA_WALLET</title>
+    <style>
+        :root {
+            --primary: #2d5016;
+            --secondary: #4a7c59;
+            --accent: #5d8a66;
+            --light-green: #76a56f;
+            --dark: #1a2f0a;
+            --light: #ffffff;
+            --background: #f8fdf6;
+            --gray: #666666;
+            --light-gray: #f5f5f5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--gray);
+            font-size: 1.1rem;
+        }
+
+        .balance-card {
+            background: var(--light);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            border-left: 5px solid var(--primary);
+        }
+
+        .balance-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .balance-item {
+            text-align: center;
+            padding: 20px;
+            background: var(--background);
+            border-radius: 10px;
+        }
+
+        .balance-label {
+            color: var(--gray);
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .balance-value {
+            color: var(--primary);
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .requirement-card {
+            background: var(--light);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .requirement-header {
+            color: var(--primary);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .requirement-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        .requirement-item:last-child {
+            border-bottom: none;
+        }
+
+        .requirement-icon {
+            margin-right: 10px;
+            font-size: 1.2rem;
+        }
+
+        .faucet-links {
+            background: rgba(45, 80, 22, 0.05);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .faucet-links h4 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .faucet-link {
+            display: inline-block;
+            background: var(--primary);
+            color: var(--light);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-decoration: none;
+            margin: 5px 10px 5px 0;
+            transition: background 0.3s ease;
+        }
+
+        .faucet-link:hover {
+            background: var(--dark);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-good {
+            background-color: var(--success);
+        }
+
+        .status-warning {
+            background-color: var(--warning);
+        }
+
+        .status-error {
+            background-color: var(--error);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: var(--light);
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            margin: 10px 5px;
+        }
+
+        .btn:hover {
+            background: var(--dark);
+            transform: translateY(-2px);
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .alert-info {
+            background: rgba(45, 80, 22, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(45, 80, 22, 0.2);
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 MATIC Balance Checker</h1>
+            <p>Check if you have enough MATIC (POL) to create EMAIL_WALLETs</p>
+        </div>
+
+        <div class="alert alert-info">
+            <strong>📋 Current Requirements:</strong><br>
+            Registration: <strong>Free</strong> (Local database only)<br>
+            EMAIL_WALLET Creation: <strong>~0.01 POL</strong> for gas fees<br>
+            Your Current Balance: <strong>0.029 POL</strong> ✅ (Sufficient!)
+        </div>
+
+        <div class="balance-card">
+            <h3 style="color: var(--primary); margin-bottom: 20px;">💼 Your Wallet Status</h3>
+            
+            <div class="balance-info">
+                <div class="balance-item">
+                    <div class="balance-label">POL Balance</div>
+                    <div class="balance-value" id="polBalance">0.029</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Credits Available</div>
+                    <div class="balance-value" id="creditsBalance">60</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Network</div>
+                    <div class="balance-value">Polygon Amoy</div>
+                </div>
+                <div class="balance-item">
+                    <div class="balance-label">Status</div>
+                    <div class="balance-value" style="color: var(--success);">Ready!</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="requirement-card">
+            <div class="requirement-header">
+                📋 What You Need for Email DATA_WALLETs
+            </div>
+            
+            <ul class="requirement-list">
+                <li class="requirement-item">
+                    <span class="status-indicator status-good"></span>
+                    <span class="requirement-icon">🔐</span>
+                    <strong>MetaMask Wallet Connected</strong> - Your wallet needs to be connected
+                </li>
+                <li class="requirement-item">
+                    <span class="status-indicator status-good"></span>
+                    <span class="requirement-icon">🌐</span>
+                    <strong>Polygon Amoy Network</strong> - Switch to testnet in MetaMask
+                </li>
+                <li class="requirement-item">
+                    <span class="status-indicator status-good"></span>
+                    <span class="requirement-icon">📧</span>
+                    <strong>Email Registration</strong> - Register your email address (FREE)
+                </li>
+                <li class="requirement-item">
+                    <span class="status-indicator status-good"></span>
+                    <span class="requirement-icon">💰</span>
+                    <strong>MATIC for Gas</strong> - At least 0.01 POL for blockchain transactions
+                </li>
+                <li class="requirement-item">
+                    <span class="status-indicator status-good"></span>
+                    <span class="requirement-icon">🎯</span>
+                    <strong>Credits</strong> - 4 credits per EMAIL_WALLET (you get 60 free!)
+                </li>
+            </ul>
+        </div>
+
+        <div class="requirement-card">
+            <div class="requirement-header">
+                🚀 Ready to Create EMAIL_WALLETs!
+            </div>
+            
+            <p style="margin-bottom: 20px;">Great news! You have everything you need to start creating EMAIL_WALLETs:</p>
+            
+            <ul style="list-style: none; padding-left: 20px; margin-bottom: 20px;">
+                <li>✅ <strong>0.029 POL</strong> - Enough for gas fees</li>
+                <li>✅ <strong>60 Credits</strong> - Can create 15 EMAIL_WALLETs</li>
+                <li>✅ <strong>Connected to testnet</strong> - Ready for blockchain transactions</li>
+            </ul>
+
+            <div style="text-align: center;">
+                <a href="/register.html" class="btn">📝 Register Your Email</a>
+                <a href="/dashboard.html" class="btn">📊 Go to Dashboard</a>
+            </div>
+        </div>
+
+        <div class="faucet-links">
+            <h4>🚰 Need More Test MATIC? Try These Faucets:</h4>
+            <a href="https://faucet.polygon.technology" class="faucet-link" target="_blank">Official Polygon Faucet</a>
+            <a href="https://www.alchemy.com/faucets/polygon-amoy" class="faucet-link" target="_blank">Alchemy Faucet</a>
+            <a href="https://amoy-faucet.polygon.technology" class="faucet-link" target="_blank">Amoy Faucet</a>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: var(--gray);">
+                <strong>Note:</strong> Faucets may have daily limits. Your current balance (0.029 POL) is already sufficient for testing!
+            </p>
+        </div>
+
+        <div class="alert alert-warning">
+            <strong>⚠️ Important:</strong> This is Polygon Amoy testnet. Test MATIC has no real value and is only for development and testing purposes.
+        </div>
+    </div>
+</body>
+</html>

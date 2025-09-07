@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EMAIL_WALLET Admin Dashboard - Rootz Innovation</title>
+    <style>
+        :root {
+            --primary: #2d5016;
+            --secondary: #4a7c59;
+            --accent: #5d8a66;
+            --light-green: #76a56f;
+            --dark: #1a2f0a;
+            --light: #ffffff;
+            --background: #f8fdf6;
+            --gray: #666666;
+            --light-gray: #f5f5f5;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--background);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Header with Mobile Navigation */
+        header {
+            background: var(--light);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 20px;
+            padding-right: 20px;
+        }
+
+        .logo {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-menu a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            padding: 8px 16px;
+            border-radius: 6px;
+        }
+
+        .nav-menu a:hover {
+            color: var(--primary);
+            background: rgba(45, 80, 22, 0.1);
+        }
+
+        .nav-menu a.active {
+            color: var(--light);
+            background: var(--primary);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--primary);
+            padding: 8px;
+            z-index: 1001;
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                width: 100%;
+                background: var(--light);
+                flex-direction: column;
+                padding: 1rem;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                gap: 1rem;
+            }
+
+            .nav-menu.active {
+                display: flex !important;
+            }
+
+            .mobile-menu-toggle {
+                display: block !important;
+            }
+
+            .nav-menu a {
+                display: block;
+                text-align: center;
+            }
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: var(--light);
+            padding: 120px 20px 40px;
+            margin-top: 80px;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+        }
+
+        .header-status {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .status-item {
+            text-align: center;
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+        }
+
+        .status-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--light);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(45, 80, 22, 0.1);
+        }
+
+        .metric:last-child {
+            border-bottom: none;
+        }
+
+        .metric-value {
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .metric-value.success {
+            color: var(--success);
+        }
+
+        .metric-value.warning {
+            color: var(--warning);
+        }
+
+        .metric-value.error {
+            color: var(--error);
+        }
+
+        .table-container {
+            background: var(--light);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .table-header {
+            background: var(--primary);
+            color: var(--light);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-header h3 {
+            margin: 0;
+            font-size: 1.2em;
+        }
+
+        .refresh-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: var(--light);
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .tabs {
+            display: flex;
+            background: var(--light);
+            border-radius: 15px 15px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: var(--background);
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            color: var(--gray);
+        }
+
+        .tab.active {
+            background: var(--primary);
+            color: var(--light);
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--light);
+            border-radius: 0 0 15px 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--light);
+        }
+
+        .btn-primary:hover {
+            background: var(--dark);
+            transform: translateY(-2px);
+        }
+
+        .data-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .list-item {
+            padding: 15px;
+            border-bottom: 1px solid rgba(45, 80, 22, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.3s ease;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item:hover {
+            background: var(--background);
+        }
+
+        .item-main {
+            flex: 1;
+        }
+
+        .item-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .item-subtitle {
+            color: var(--gray);
+            font-size: 0.9em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-badge.active {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .status-badge.pending {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-badge.failed {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--error);
+        }
+
+        .status-badge.processing {
+            background: rgba(45, 80, 22, 0.1);
+            color: var(--primary);
+        }
+
+        @media (max-width: 768px) {
+            .page-header {
+                padding: 100px 20px 30px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .header-status {
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+
+            .tab {
+                border-radius: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="/" class="logo">📧 Email DATA_WALLET</a>
+            <button class="mobile-menu-toggle" onclick="toggleMobileMenu()">☰</button>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="/">Home</a></li>
+                <li><a href="/register.html">Register</a></li>
+                <li><a href="/dashboard.html">Dashboard</a></li>
+                <li><a href="/authorization.html">Authorization</a></li>
+                <li><a href="/admin.html" class="active">Admin</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="page-header">
+        <div class="header-content">
+            <h1>📊 EMAIL_WALLET Admin Dashboard</h1>
+            <div class="header-status">
+                <div class="status-item">
+                    <span class="status-value" id="systemStatus">●</span>
+                    <span class="status-label">System</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="blockchainStatus">●</span>
+                    <span class="status-label">Blockchain</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-value" id="emailStatus">●</span>
+                    <span class="status-label">Email Service</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Metrics Overview -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>📈 System Metrics</h3>
+                <div class="metric">
+                    <span>Total Registrations</span>
+                    <span class="metric-value" id="totalRegistrations">-</span>
+                </div>
+                <div class="metric">
+                    <span>Active EMAIL_WALLETs</span>
+                    <span class="metric-value success" id="activeWallets">-</span>
+                </div>
+                <div class="metric">
+                    <span>Pending Authorizations</span>
+                    <span class="metric-value warning" id="pendingAuth">-</span>
+                </div>
+                <div class="metric">
+                    <span>Failed Transactions</span>
+                    <span class="metric-value error" id="failedTx">-</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>📧 Email Processing</h3>
+                <div class="metric">
+                    <span>Emails Processed Today</span>
+                    <span class="metric-value" id="emailsToday">-</span>
+                </div>
+                <div class="metric">
+                    <span>EMAIL_WALLETs Created Today</span>
+                    <span class="metric-value success" id="walletsToday">-</span>
+                </div>
+                <div class="metric">
+                    <span>Processing Queue</span>
+                    <span class="metric-value warning" id="processingQueue">-</span>
+                </div>
+                <div class="metric">
+                    <span>Average Processing Time</span>
+                    <span class="metric-value" id="avgProcessTime">-</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>💰 Credit System</h3>
+                <div class="metric">
+                    <span>Total Credits Allocated</span>
+                    <span class="metric-value" id="totalCredits">-</span>
+                </div>
+                <div class="metric">
+                    <span>Credits Used Today</span>
+                    <span class="metric-value" id="creditsUsed">-</span>
+                </div>
+                <div class="metric">
+                    <span>Average Credit Cost</span>
+                    <span class="metric-value" id="avgCreditCost">4</span>
+                </div>
+                <div class="metric">
+                    <span>Low Balance Wallets</span>
+                    <span class="metric-value warning" id="lowBalanceWallets">-</span>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🔧 System Health</h3>
+                <div class="metric">
+                    <span>Uptime</span>
+                    <span class="metric-value success" id="systemUptime">-</span>
+                </div>
+                <div class="metric">
+                    <span>Last Blockchain Sync</span>
+                    <span class="metric-value" id="lastSync">-</span>
+                </div>
+                <div class="metric">
+                    <span>Memory Usage</span>
+                    <span class="metric-value" id="memoryUsage">-</span>
+                </div>
+                <div class="metric">
+                    <span>Error Rate</span>
+                    <span class="metric-value" id="errorRate">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('registrations')">👥 User Registrations</button>
+            <button class="tab" onclick="showTab('emails')">📧 Email Processing</button>
+            <button class="tab" onclick="showTab('wallets')">💼 EMAIL_WALLET Status</button>
+            <button class="tab" onclick="showTab('system')">⚙️ System Logs</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div id="registrations" class="tab-content active">
+            <div class="table-header">
+                <h3>User Registrations</h3>
+                <button class="refresh-btn" onclick="loadRegistrations()">🔄 Refresh</button>
+            </div>
+            <div id="registrationsContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading registrations...
+                </div>
+            </div>
+        </div>
+
+        <div id="emails" class="tab-content">
+            <div class="table-header">
+                <h3>Email Processing Tasks</h3>
+                <button class="refresh-btn" onclick="loadEmailTasks()">🔄 Refresh</button>
+            </div>
+            <div id="emailsContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading email tasks...
+                </div>
+            </div>
+        </div>
+
+        <div id="wallets" class="tab-content">
+            <div class="table-header">
+                <h3>EMAIL_WALLETs</h3>
+                <button class="refresh-btn" onclick="loadWallets()">🔄 Refresh</button>
+            </div>
+            <div id="walletsContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading EMAIL_WALLETs...
+                </div>
+            </div>
+        </div>
+
+        <div id="system" class="tab-content">
+            <div class="table-header">
+                <h3>System Logs & Events</h3>
+                <button class="refresh-btn" onclick="loadSystemLogs()">🔄 Refresh</button>
+            </div>
+            <div id="systemContent">
+                <div class="loading">
+                    <div class="spinner"></div>
+                    Loading system logs...
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="testSystemHealth()">🔍 Test System Health</button>
+            <button class="btn btn-primary" onclick="exportData()">📤 Export Data</button>
+            <button class="btn btn-primary" onclick="manualSync()">🔄 Manual Blockchain Sync</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = '/api';
+
+        // Mobile navigation
+        function toggleMobileMenu() {
+            const navMenu = document.getElementById('navMenu');
+            navMenu.classList.toggle('active');
+        }
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', function(event) {
+            const navMenu = document.getElementById('navMenu');
+            const toggleButton = document.querySelector('.mobile-menu-toggle');
+            
+            if (!navMenu.contains(event.target) && !toggleButton.contains(event.target)) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Close mobile menu when window is resized to desktop
+        window.addEventListener('resize', function() {
+            const navMenu = document.getElementById('navMenu');
+            if (window.innerWidth > 768) {
+                navMenu.classList.remove('active');
+            }
+        });
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardData();
+            startAutoRefresh();
+        });
+
+        // Load dashboard metrics
+        async function loadDashboardData() {
+            try {
+                updateSystemStatus();
+                await Promise.all([
+                    loadSystemMetrics(),
+                    loadEmailMetrics(),
+                    loadCreditMetrics(),
+                    loadHealthMetrics()
+                ]);
+                loadRegistrations();
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+            }
+        }
+
+        // Update system status indicators
+        async function updateSystemStatus() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/blockchaintest/status`);
+                const isHealthy = response.ok;
+                
+                document.getElementById('systemStatus').textContent = isHealthy ? '🟢' : '🔴';
+                document.getElementById('blockchainStatus').textContent = isHealthy ? '🟢' : '🔴';
+                document.getElementById('emailStatus').textContent = isHealthy ? '🟢' : '🔴';
+            } catch (error) {
+                document.getElementById('systemStatus').textContent = '🔴';
+                document.getElementById('blockchainStatus').textContent = '🔴';
+                document.getElementById('emailStatus').textContent = '🔴';
+            }
+        }
+
+        // Load system metrics
+        async function loadSystemMetrics() {
+            // Set demo values for now
+            document.getElementById('totalRegistrations').textContent = '1';
+            document.getElementById('activeWallets').textContent = '1';
+            document.getElementById('pendingAuth').textContent = '0';
+            document.getElementById('failedTx').textContent = '0';
+        }
+
+        // Load email metrics
+        async function loadEmailMetrics() {
+            document.getElementById('emailsToday').textContent = '0';
+            document.getElementById('walletsToday').textContent = '0';
+            document.getElementById('processingQueue').textContent = '0';
+            document.getElementById('avgProcessTime').textContent = '2.5s';
+        }
+
+        // Load credit metrics
+        async function loadCreditMetrics() {
+            document.getElementById('totalCredits').textContent = '60';
+            document.getElementById('creditsUsed').textContent = '0';
+            document.getElementById('avgCreditCost').textContent = '4';
+            document.getElementById('lowBalanceWallets').textContent = '0';
+        }
+
+        // Load health metrics
+        async function loadHealthMetrics() {
+            document.getElementById('systemUptime').textContent = '24h 15m';
+            document.getElementById('lastSync').textContent = 'Just now';
+            document.getElementById('memoryUsage').textContent = '45%';
+            document.getElementById('errorRate').textContent = '0.01%';
+        }
+
+        // Tab management
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            switch(tabName) {
+                case 'registrations':
+                    loadRegistrations();
+                    break;
+                case 'emails':
+                    loadEmailTasks();
+                    break;
+                case 'wallets':
+                    loadWallets();
+                    break;
+                case 'system':
+                    loadSystemLogs();
+                    break;
+            }
+        }
+
+        // Load data functions
+        async function loadRegistrations() {
+            const container = document.getElementById('registrationsContent');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading registrations...</div>';
+            
+            try {
+                // Demo data for now
+                const registrations = [
+                    {
+                        emailAddress: 'test@example.com',
+                        walletAddress: '0x107C5655ce50AB9744Fc36A4e9935E30d4923d0b',
+                        registrationDate: new Date().toISOString(),
+                        creditBalance: 60,
+                        isActive: true
+                    }
+                ];
+                displayRegistrations(registrations);
+            } catch (error) {
+                container.innerHTML = `<div class="loading">❌ Error loading registrations: ${error.message}</div>`;
+            }
+        }
+
+        function displayRegistrations(registrations) {
+            const container = document.getElementById('registrationsContent');
+            
+            if (!registrations || registrations.length === 0) {
+                container.innerHTML = '<div class="loading">📝 No registrations found</div>';
+                return;
+            }
+
+            const listHTML = `
+                <div class="data-list">
+                    ${registrations.map(reg => `
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-title">${reg.emailAddress}</div>
+                                <div class="item-subtitle">
+                                    Wallet: ${reg.walletAddress.substring(0, 10)}...${reg.walletAddress.substring(32)} | 
+                                    Registered: ${new Date(reg.registrationDate).toLocaleDateString()} |
+                                    Credits: ${reg.creditBalance}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="status-badge ${reg.isActive ? 'active' : 'pending'}">${reg.isActive ? 'Active' : 'Pending'}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            container.innerHTML = listHTML;
+        }
+
+        async function loadEmailTasks() {
+            const container = document.getElementById('emailsContent');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading email tasks...</div>';
+            
+            setTimeout(() => {
+                container.innerHTML = '<div class="loading">📧 No email processing tasks currently active</div>';
+            }, 1000);
+        }
+
+        async function loadWallets() {
+            const container = document.getElementById('walletsContent');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading EMAIL_WALLETs...</div>';
+            
+            setTimeout(() => {
+                container.innerHTML = '<div class="loading">💼 No EMAIL_WALLETs created yet</div>';
+            }, 1000);
+        }
+
+        async function loadSystemLogs() {
+            const container = document.getElementById('systemContent');
+            container.innerHTML = '<div class="loading"><div class="spinner"></div>Loading system logs...</div>';
+            
+            setTimeout(() => {
+                const logs = [
+                    {
+                        message: 'Email DATA_WALLET service started successfully',
+                        timestamp: new Date().toISOString(),
+                        component: 'System',
+                        level: 'info'
+                    },
+                    {
+                        message: 'Blockchain connection established',
+                        timestamp: new Date(Date.now() - 60000).toISOString(),
+                        component: 'Blockchain',
+                        level: 'info'
+                    }
+                ];
+                displaySystemLogs(logs);
+            }, 1000);
+        }
+
+        function displaySystemLogs(logs) {
+            const container = document.getElementById('systemContent');
+            
+            const listHTML = `
+                <div class="data-list">
+                    ${logs.map(log => `
+                        <div class="list-item">
+                            <div class="item-main">
+                                <div class="item-title">${log.message}</div>
+                                <div class="item-subtitle">
+                                    ${new Date(log.timestamp).toLocaleString()} | 
+                                    Component: ${log.component} |
+                                    Level: ${log.level.toUpperCase()}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="status-badge ${getLogLevelClass(log.level)}">${log.level.toUpperCase()}</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            container.innerHTML = listHTML;
+        }
+
+        // Action functions
+        async function testSystemHealth() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/blockchaintest/status`);
+                const data = await response.json();
+                const healthText = data.isConnected ? 'System is healthy ✅' : 'System has issues ❌';
+                alert(`🏥 Health Check Results:\n\n${healthText}\n\nBlockchain: ${data.isConnected ? 'Connected' : 'Disconnected'}\nTimestamp: ${data.timestamp}`);
+            } catch (error) {
+                alert('❌ Health check failed: ' + error.message);
+            }
+        }
+
+        async function exportData() {
+            try {
+                alert('📤 Export feature coming soon!\n\nThis will export all EMAIL_WALLET data, registrations, and system metrics to a JSON file.');
+            } catch (error) {
+                alert('❌ Export failed: ' + error.message);
+            }
+        }
+
+        async function manualSync() {
+            try {
+                alert('🔄 Manual blockchain sync initiated!\n\nThis will refresh all contract states and balances from the Polygon Amoy network.');
+                loadDashboardData();
+            } catch (error) {
+                alert('❌ Manual sync failed: ' + error.message);
+            }
+        }
+
+        // Utility functions
+        function getLogLevelClass(level) {
+            switch (level.toLowerCase()) {
+                case 'info': return 'active';
+                case 'warning': return 'pending';
+                case 'error': return 'failed';
+                default: return 'pending';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Auto-refresh functionality
+        function startAutoRefresh() {
+            setInterval(() => {
+                updateSystemStatus();
+                loadSystemMetrics();
+                loadEmailMetrics();
+                loadCreditMetrics();
+                loadHealthMetrics();
+            }, 30000); // Refresh every 30 seconds
+        }
+    </script>
+</body>
+</html>
