@@ -1,0 +1,8 @@
+Fix compilation errors: Complete missing models and interfaces
+
+- Add WalletType enum
+- Add VerificationInfo, FileMetadataInfo, VirusScanResult classes  
+- Add IWalletCreatorService and IFileProcessorService interfaces
+- Add complete mock implementations with proper namespaces
+- Fix all 9 compilation errors for Ubuntu deployment
+- Services already registered in Program.cs DI container
