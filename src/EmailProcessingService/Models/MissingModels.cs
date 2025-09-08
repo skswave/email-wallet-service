@@ -1,168 +1,91 @@
-// Missing Model Classes for Email Wallet Service
+// Missing Types for Email Wallet Service Compilation
+// Based on actual compilation errors and code analysis
+
 using System.ComponentModel.DataAnnotations;
 
 namespace EmailProcessingService.Models
 {
-    // Wallet Type Enumeration
+    // WalletType enum - Referenced in BlockchainModels.cs
     public enum WalletType
     {
         EmailData,
-        Attachment,
+        Attachment, 
         Registration,
         Authorization
     }
 
-    // Verification Information
+    // VerificationInfo class - Referenced in WalletCreationResult.VerificationInfo property
     public class VerificationInfo
     {
-        public string? DkimSignature { get; set; }
-        public string? SpfRecord { get; set; }
-        public string? DmarcPolicy { get; set; }
-        public bool IsVerified { get; set; }
-        public string? VerificationMethod { get; set; }
-        public DateTime VerificationTimestamp { get; set; } = DateTime.UtcNow;
-        public List<string> VerificationErrors { get; set; } = new();
+        public string ContentHash { get; set; } = string.Empty;
+        public string BlockchainTx { get; set; } = string.Empty;
+        public long BlockNumber { get; set; }
+        public DateTime VerifiedAt { get; set; }
+        public string Network { get; set; } = string.Empty;
     }
 
-    // File Metadata Information
+    // FileMetadataInfo class - Referenced in FileProcessingResult.ExtractedMetadata property
     public class FileMetadataInfo
     {
         public string FileName { get; set; } = string.Empty;
-        public long FileSize { get; set; }
         public string ContentType { get; set; } = string.Empty;
+        public string FileType { get; set; } = string.Empty;
+        public long FileSize { get; set; }
+        public DateTime ProcessedAt { get; set; }
         public string FileHash { get; set; } = string.Empty;
-        public string HashAlgorithm { get; set; } = "SHA256";
-        public DateTime CreatedDate { get; set; }
-        public DateTime ModifiedDate { get; set; }
-        public string? Description { get; set; }
-        public Dictionary<string, object> CustomProperties { get; set; } = new();
     }
 
-    // Virus Scan Result
+    // VirusScanResult class - Referenced in FileProcessingResult.VirusScanResult property
     public class VirusScanResult
     {
-        public bool IsClean { get; set; }
+        public bool Scanned { get; set; }
+        public bool Clean { get; set; }
+        public DateTime ScannedAt { get; set; }
         public string ScanEngine { get; set; } = string.Empty;
-        public DateTime ScanTimestamp { get; set; } = DateTime.UtcNow;
         public List<string> ThreatsDetected { get; set; } = new();
-        public string ScanDuration { get; set; } = string.Empty;
-        public string ScanId { get; set; } = string.Empty;
-        public ScanStatus Status { get; set; } = ScanStatus.NotScanned;
-        public string? ErrorMessage { get; set; }
     }
+}
 
-    // Scan Status Enumeration
-    public enum ScanStatus
-    {
-        NotScanned,
-        Scanning,
-        Clean,
-        Infected,
-        Error,
-        Skipped
-    }
-
-    // Wallet Creator Service Interface (placeholder)
-    public interface IWalletCreatorService
-    {
-        Task<string> CreateEmailWalletAsync(string emailId, string walletAddress);
-        Task<string> CreateAttachmentWalletAsync(string attachmentId, string emailWalletId);
-        Task<bool> ValidateWalletAsync(string walletId);
-    }
-
-    // File Processor Service Interface (placeholder)
+namespace EmailProcessingService.Services
+{
+    // IFileProcessorService interface - Required by existing FileProcessorService implementation
     public interface IFileProcessorService
     {
-        Task<FileMetadataInfo> ProcessFileAsync(Stream fileStream, string fileName);
-        Task<VirusScanResult> ScanFileAsync(Stream fileStream, string fileName);
-        Task<bool> ValidateFileTypeAsync(string fileName, string contentType);
+        Task<FileProcessingResult> ProcessFileAsync(byte[] fileContent, string fileName);
     }
 
-    // Wallet Creator Service Implementation (basic)
+    // IWalletCreatorService interface - Referenced in EmailProcessingService and Program.cs
+    public interface IWalletCreatorService
+    {
+        Task<WalletCreationResult> CreateEmailDataWalletAsync(IncomingEmailMessage email, UserRegistration user);
+    }
+
+    // WalletCreatorService implementation - Required by Program.cs service registration
     public class WalletCreatorService : IWalletCreatorService
     {
-        public async Task<string> CreateEmailWalletAsync(string emailId, string walletAddress)
+        private readonly ILogger<WalletCreatorService> _logger;
+
+        public WalletCreatorService(ILogger<WalletCreatorService> logger)
         {
-            // Placeholder implementation
-            await Task.Delay(10);
-            return $"email_wallet_{Guid.NewGuid():N}";
+            _logger = logger;
         }
 
-        public async Task<string> CreateAttachmentWalletAsync(string attachmentId, string emailWalletId)
+        public async Task<WalletCreationResult> CreateEmailDataWalletAsync(IncomingEmailMessage email, UserRegistration user)
         {
-            // Placeholder implementation
-            await Task.Delay(10);
-            return $"attachment_wallet_{Guid.NewGuid():N}";
-        }
+            _logger.LogInformation("Creating email data wallet for message {MessageId} and user {WalletAddress}", 
+                email.MessageId, user.WalletAddress);
 
-        public async Task<bool> ValidateWalletAsync(string walletId)
-        {
-            // Placeholder implementation
-            await Task.Delay(10);
-            return !string.IsNullOrEmpty(walletId);
-        }
-    }
+            // Simulate wallet creation process
+            await Task.Delay(100);
 
-    // File Processor Service Implementation (basic)
-    public class FileProcessorService : IFileProcessorService
-    {
-        public async Task<FileMetadataInfo> ProcessFileAsync(Stream fileStream, string fileName)
-        {
-            await Task.Delay(10);
-            return new FileMetadataInfo
+            return new WalletCreationResult
             {
-                FileName = fileName,
-                FileSize = fileStream.Length,
-                ContentType = GetContentType(fileName),
-                FileHash = ComputeHash(fileStream),
-                CreatedDate = DateTime.UtcNow,
-                ModifiedDate = DateTime.UtcNow
+                Success = true,
+                EmailWalletId = $"email_wallet_{Guid.NewGuid():N}",
+                AttachmentWalletIds = email.Attachments.Select(a => $"attachment_wallet_{Guid.NewGuid():N}").ToList(),
+                CreditsUsed = 3 + (email.Attachments.Count * 2),
+                ProcessingTime = TimeSpan.FromMilliseconds(100)
             };
-        }
-
-        public async Task<VirusScanResult> ScanFileAsync(Stream fileStream, string fileName)
-        {
-            await Task.Delay(10);
-            return new VirusScanResult
-            {
-                IsClean = true,
-                ScanEngine = "Basic Scanner",
-                Status = ScanStatus.Clean,
-                ScanId = Guid.NewGuid().ToString("N")
-            };
-        }
-
-        public async Task<bool> ValidateFileTypeAsync(string fileName, string contentType)
-        {
-            await Task.Delay(10);
-            var allowedExtensions = new[] { ".pdf", ".doc", ".docx", ".txt", ".jpg", ".png" };
-            var extension = Path.GetExtension(fileName).ToLowerInvariant();
-            return allowedExtensions.Contains(extension);
-        }
-
-        private string GetContentType(string fileName)
-        {
-            var extension = Path.GetExtension(fileName).ToLowerInvariant();
-            return extension switch
-            {
-                ".pdf" => "application/pdf",
-                ".doc" => "application/msword",
-                ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                ".txt" => "text/plain",
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                _ => "application/octet-stream"
-            };
-        }
-
-        private string ComputeHash(Stream fileStream)
-        {
-            using var sha256 = System.Security.Cryptography.SHA256.Create();
-            var position = fileStream.Position;
-            fileStream.Position = 0;
-            var hashBytes = sha256.ComputeHash(fileStream);
-            fileStream.Position = position;
-            return Convert.ToHexString(hashBytes);
         }
     }
 }
