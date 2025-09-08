@@ -104,6 +104,8 @@ builder.Services.AddCors(options =>
                 "https://auth.rootz.global", 
                 "https://wallet.rootz.global",
                 "https://ipfs.rootz.global",
+                "https://rootz.global",     // Main website HTTPS
+                "http://rootz.global",      // Main website HTTP
                 "https://localhost:7000",  // Add for Swagger HTTPS
                 "http://localhost:5000",   // Add for Swagger HTTP
                 "http://localhost:3000")   // For development
