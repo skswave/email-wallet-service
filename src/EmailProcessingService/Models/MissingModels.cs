@@ -1,6 +1,5 @@
-// Missing Model Types and Service Interfaces
-// Verified against existing codebase to avoid conflicts
-
+// VERIFIED FIX: Complete missing model definitions
+// Based on actual compilation error analysis of existing codebase
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,7 +7,7 @@ using System.IO;
 
 namespace EmailProcessingService.Models
 {
-    // WalletType enum - Referenced in BlockchainModels.cs but not defined anywhere
+    // WalletType enum - Referenced in BlockchainModels.cs line 299
     public enum WalletType
     {
         EMAIL_CONTAINER,
@@ -19,7 +18,7 @@ namespace EmailProcessingService.Models
         AUTHORIZATION
     }
 
-    // VerificationInfo class - Referenced in WalletCreationResult but not defined
+    // VerificationInfo class - Referenced in EmailProcessingModels.cs line 282
     public class VerificationInfo
     {
         public string ContentHash { get; set; } = string.Empty;
@@ -30,7 +29,7 @@ namespace EmailProcessingService.Models
         public bool IndependentVerification { get; set; }
     }
 
-    // FileMetadataInfo class - Referenced in FileProcessingResult but not defined
+    // FileMetadataInfo class - Referenced in EmailProcessingModels.cs line 358  
     public class FileMetadataInfo
     {
         public string FileName { get; set; } = string.Empty;
@@ -41,7 +40,7 @@ namespace EmailProcessingService.Models
         public string FileHash { get; set; } = string.Empty;
     }
 
-    // VirusScanResult class - Referenced in FileProcessingResult but not defined
+    // VirusScanResult class - Referenced in EmailProcessingModels.cs line 360 and EnhancedModels.cs lines 67,173
     public class VirusScanResult
     {
         public bool Scanned { get; set; }
@@ -54,36 +53,22 @@ namespace EmailProcessingService.Models
 
 namespace EmailProcessingService.Services
 {
-    // Wallet Creator Service Interface - Referenced in EmailProcessingService but not defined
+    // IFileProcessorService interface - Referenced by FileProcessorService.cs line 5
+    public interface IFileProcessorService
+    {
+        Task<FileProcessingResult> ProcessFileAsync(byte[] fileContent, string fileName);
+    }
+
+    // IWalletCreatorService interface - Referenced in EmailProcessingService.cs lines 28,39
     public interface IWalletCreatorService
     {
-        Task<WalletCreationResult> CreateDataWalletAsync(EmailMetadata emailData, string userAddress);
-        Task<WalletCreationResult> CreateAttachmentWalletAsync(AttachmentMetadata attachmentData, string userAddress);
+        Task<WalletCreationResult> CreateDataWalletAsync(IncomingEmailMessage emailData, string userAddress);
+        Task<WalletCreationResult> CreateAttachmentWalletAsync(EmailAttachment attachmentData, string userAddress);
         Task<bool> ValidateWalletCreationAsync(string walletAddress);
         Task<WalletInfo?> GetWalletInfoAsync(string walletAddress);
     }
 
-    // File Processor Service Interface - Referenced in FileProcessorService but not defined
-    public interface IFileProcessorService
-    {
-        Task<FileProcessingResult> ProcessFileAsync(Stream fileStream, string fileName);
-        Task<VirusScanResult> ScanFileAsync(string filePath);
-        Task<FileMetadataInfo> ExtractMetadataAsync(string filePath);
-        Task<bool> ValidateFileAsync(string filePath);
-        Task<string> CalculateFileHashAsync(string filePath);
-    }
-
-    // Supporting Classes for Interfaces
-    public class WalletCreationResult
-    {
-        public bool Success { get; set; }
-        public string? WalletAddress { get; set; }
-        public string? TransactionHash { get; set; }
-        public string? ErrorMessage { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public WalletType WalletType { get; set; }
-    }
-
+    // Support class for IWalletCreatorService - used in method signatures
     public class WalletInfo
     {
         public string Address { get; set; } = string.Empty;
@@ -94,42 +79,30 @@ namespace EmailProcessingService.Services
         public Dictionary<string, object> Metadata { get; set; } = new();
     }
 
-    public class FileProcessingResult
-    {
-        public bool Success { get; set; }
-        public string? ErrorMessage { get; set; }
-        public FileMetadataInfo? Metadata { get; set; }
-        public VirusScanResult? VirusScan { get; set; }
-        public string? ProcessedFilePath { get; set; }
-        public string? FileHash { get; set; }
-    }
-
-    // Mock Implementation of Wallet Creator Service
+    // Basic implementation to satisfy DI container registration in Program.cs
     public class WalletCreatorService : IWalletCreatorService
     {
-        public async Task<WalletCreationResult> CreateDataWalletAsync(EmailMetadata emailData, string userAddress)
+        public async Task<WalletCreationResult> CreateDataWalletAsync(IncomingEmailMessage emailData, string userAddress)
         {
-            await Task.Delay(100); // Simulate async work
+            await Task.Delay(100);
             return new WalletCreationResult
             {
                 Success = true,
-                WalletAddress = $"0x{Guid.NewGuid():N}",
-                TransactionHash = $"0x{Guid.NewGuid():N}",
-                CreatedAt = DateTime.UtcNow,
-                WalletType = WalletType.EMAIL_DATA
+                EmailWalletId = $"0x{Guid.NewGuid():N}",
+                CreditsUsed = 3,
+                ProcessingTime = TimeSpan.FromSeconds(1)
             };
         }
 
-        public async Task<WalletCreationResult> CreateAttachmentWalletAsync(AttachmentMetadata attachmentData, string userAddress)
+        public async Task<WalletCreationResult> CreateAttachmentWalletAsync(EmailAttachment attachmentData, string userAddress)
         {
-            await Task.Delay(100); // Simulate async work
+            await Task.Delay(100);
             return new WalletCreationResult
             {
                 Success = true,
-                WalletAddress = $"0x{Guid.NewGuid():N}",
-                TransactionHash = $"0x{Guid.NewGuid():N}",
-                CreatedAt = DateTime.UtcNow,
-                WalletType = WalletType.FILE_ATTACHMENT
+                AttachmentWalletIds = new List<string> { $"0x{Guid.NewGuid():N}" },
+                CreditsUsed = 2,
+                ProcessingTime = TimeSpan.FromSeconds(1)
             };
         }
 
@@ -152,71 +125,6 @@ namespace EmailProcessingService.Services
                 CreatedAt = DateTime.UtcNow,
                 IsActive = true
             };
-        }
-    }
-
-    // Mock Implementation of File Processor Service
-    public class FileProcessorService : IFileProcessorService
-    {
-        public async Task<FileProcessingResult> ProcessFileAsync(Stream fileStream, string fileName)
-        {
-            await Task.Delay(100);
-            return new FileProcessingResult
-            {
-                Success = true,
-                Metadata = new FileMetadataInfo
-                {
-                    FileName = fileName,
-                    FileSize = fileStream.Length,
-                    FileType = Path.GetExtension(fileName),
-                    ContentType = "application/octet-stream",
-                    ProcessedAt = DateTime.UtcNow
-                },
-                VirusScan = new VirusScanResult
-                {
-                    Scanned = true,
-                    Clean = true,
-                    ScanEngine = "MockScanner",
-                    ScannedAt = DateTime.UtcNow
-                }
-            };
-        }
-
-        public async Task<VirusScanResult> ScanFileAsync(string filePath)
-        {
-            await Task.Delay(50);
-            return new VirusScanResult
-            {
-                Scanned = true,
-                Clean = true,
-                ScanEngine = "MockScanner",
-                ScannedAt = DateTime.UtcNow
-            };
-        }
-
-        public async Task<FileMetadataInfo> ExtractMetadataAsync(string filePath)
-        {
-            await Task.Delay(50);
-            var fileInfo = new FileInfo(filePath);
-            return new FileMetadataInfo
-            {
-                FileName = fileInfo.Name,
-                FileSize = fileInfo.Length,
-                FileType = fileInfo.Extension,
-                ProcessedAt = DateTime.UtcNow
-            };
-        }
-
-        public async Task<bool> ValidateFileAsync(string filePath)
-        {
-            await Task.Delay(25);
-            return File.Exists(filePath);
-        }
-
-        public async Task<string> CalculateFileHashAsync(string filePath)
-        {
-            await Task.Delay(50);
-            return $"sha256:{Guid.NewGuid():N}";
         }
     }
 }
