@@ -1,7 +1,5 @@
-// Missing Types for Email Wallet Service Compilation
-// Based on actual compilation errors and code analysis
-
-using System.ComponentModel.DataAnnotations;
+// Missing Types for Email Wallet Service - Minimal Fix
+using EmailProcessingService.Models;
 
 namespace EmailProcessingService.Models
 {
@@ -14,7 +12,7 @@ namespace EmailProcessingService.Models
         Authorization
     }
 
-    // VerificationInfo class - Referenced in WalletCreationResult.VerificationInfo property
+    // VerificationInfo class - Referenced in WalletCreationResult
     public class VerificationInfo
     {
         public string ContentHash { get; set; } = string.Empty;
@@ -24,7 +22,7 @@ namespace EmailProcessingService.Models
         public string Network { get; set; } = string.Empty;
     }
 
-    // FileMetadataInfo class - Referenced in FileProcessingResult.ExtractedMetadata property
+    // FileMetadataInfo class - Referenced in FileProcessingResult
     public class FileMetadataInfo
     {
         public string FileName { get; set; } = string.Empty;
@@ -35,7 +33,7 @@ namespace EmailProcessingService.Models
         public string FileHash { get; set; } = string.Empty;
     }
 
-    // VirusScanResult class - Referenced in FileProcessingResult.VirusScanResult property
+    // VirusScanResult class - Referenced in FileProcessingResult
     public class VirusScanResult
     {
         public bool Scanned { get; set; }
@@ -48,19 +46,21 @@ namespace EmailProcessingService.Models
 
 namespace EmailProcessingService.Services
 {
-    // IFileProcessorService interface - Required by existing FileProcessorService implementation
+    using EmailProcessingService.Models;
+
+    // IFileProcessorService interface - Required by FileProcessorService
     public interface IFileProcessorService
     {
         Task<FileProcessingResult> ProcessFileAsync(byte[] fileContent, string fileName);
     }
 
-    // IWalletCreatorService interface - Referenced in EmailProcessingService and Program.cs
+    // IWalletCreatorService interface - Required by EmailProcessingService
     public interface IWalletCreatorService
     {
         Task<WalletCreationResult> CreateEmailDataWalletAsync(IncomingEmailMessage email, UserRegistration user);
     }
 
-    // WalletCreatorService implementation - Required by Program.cs service registration
+    // WalletCreatorService implementation - Required by Program.cs
     public class WalletCreatorService : IWalletCreatorService
     {
         private readonly ILogger<WalletCreatorService> _logger;
@@ -72,11 +72,7 @@ namespace EmailProcessingService.Services
 
         public async Task<WalletCreationResult> CreateEmailDataWalletAsync(IncomingEmailMessage email, UserRegistration user)
         {
-            _logger.LogInformation("Creating email data wallet for message {MessageId} and user {WalletAddress}", 
-                email.MessageId, user.WalletAddress);
-
-            // Simulate wallet creation process
-            await Task.Delay(100);
+            await Task.Delay(50); // Simulate processing
 
             return new WalletCreationResult
             {
@@ -84,7 +80,7 @@ namespace EmailProcessingService.Services
                 EmailWalletId = $"email_wallet_{Guid.NewGuid():N}",
                 AttachmentWalletIds = email.Attachments.Select(a => $"attachment_wallet_{Guid.NewGuid():N}").ToList(),
                 CreditsUsed = 3 + (email.Attachments.Count * 2),
-                ProcessingTime = TimeSpan.FromMilliseconds(100)
+                ProcessingTime = TimeSpan.FromMilliseconds(50)
             };
         }
     }
