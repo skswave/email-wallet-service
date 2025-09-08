@@ -2,8 +2,10 @@
 echo 🔧 Pushing compilation fix to GitHub...
 echo.
 
-git add .
-git commit -m "Fix compilation errors: Complete missing models and interfaces
+cd /d "C:\Users\StevenSprague\OneDrive - Rivetz Corp\Rootz\claud project\email-wallet-service-repo"
+
+git add src/EmailProcessingService/Models/MissingModels.cs
+git commit -m "Fix compilation errors: Add missing model classes
 
 - Add WalletType enum  
 - Add VerificationInfo, FileMetadataInfo, VirusScanResult classes
