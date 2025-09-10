@@ -1,0 +1,187 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning",
+      "Microsoft.EntityFrameworkCore": "Warning",
+      "EmailProcessingService.Services.BlockchainService": "Debug",
+      "EmailProcessingService.Services.IpfsService": "Debug"
+    },
+    "Console": {
+      "IncludeScopes": false
+    },
+    "File": {
+      "Path": "/opt/email-wallet-service/logs/email-wallet-{Date}.log",
+      "LogLevel": {
+        "Default": "Information"
+      },
+      "RetainedFileCountLimit": 30,
+      "FileSizeLimitBytes": 10485760
+    }
+  },
+  "AllowedHosts": "*",
+  "Urls": "http://localhost:5000",
+  
+  "ConnectionStrings": {
+    "DefaultConnection": "InMemory",
+    "Redis": "localhost:6379"
+  },
+
+  "EmailProcessing": {
+    "MaxEmailSize": 26214400,
+    "MaxAttachmentCount": 10,
+    "MaxAttachmentSize": 10485760,
+    "AllowedFileTypes": [
+      ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", 
+      ".jpg", ".jpeg", ".png", ".zip"
+    ],
+    "AuthorizationBaseUrl": "https://api.rivetz.global",
+    "AuthorizationTokenExpirationHours": 24,
+    "ProcessingTimeoutMinutes": 30
+  },
+  
+  "Blockchain": {
+    "Network": "polygon-amoy",
+    "ChainId": 80002,
+    "RpcUrl": "https://rpc-amoy.polygon.technology/",
+    "TestWallet": {
+      "Address": "0xE2d0E252E7da22901bd1ffDD012Da2c77aC3033a",
+      "PrivateKey": "0x36549a7f0853dee1fdad1c432076b12946646ae511a1b54a6d014c17e85d196b"
+    },
+    "EnableRealTransactions": true,
+    "ContractAddresses": {
+      "EmailWalletRegistration": "0x71C1d6a0DAB73b25dE970E032bafD42a29dC010F",
+      "EmailDataWallet": "0x52eBB3761D36496c29FB6A3D5354C449928A4048",
+      "AttachmentWallet": "0x5e0e2d3FE611e4FA319ceD3f2CF1fe7EdBb5Dbb7",
+      "AuthorizationManager": "0x3D00d01d779f7f11E89897320A2CcA47FFC14887"
+    },
+    "RegistrationFee": "0.01",
+    "RegistrationFeeWei": "10000000000000000",
+    "GasLimitMultiplier": 1.2,
+    "MaxGasPrice": "50000000000",
+    "ConfirmationBlocks": 2,
+    "ExplorerUrl": "https://amoy.polygonscan.com"
+  },
+  
+  "IPFS": {
+    "ApiUrl": "https://api.pinata.cloud",
+    "GatewayUrl": "https://gateway.pinata.cloud/ipfs",
+    "PinataApiKey": "1669910d6fee895a8696",
+    "PinataSecretKey": "40c64716ce2cdd4d6e262c21ccdf15d4fda83b0b5e05315c3ae10943c03af8f1",
+    "PinataJWT": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIxMGQxZmQ3ZS1hOTc2LTQ1N2ItYTc3OC0xNjExODMwNzNkODkiLCJlbWFpbCI6InN0ZXZlbkBzcHJhZ3VlLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaW5fcG9saWN5Ijp7InJlZ2lvbnMiOlt7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6IkZSQTEifSx7ImRlc2lyZWRSZXBsaWNhdGlvbkNvdW50IjoxLCJpZCI6Ik5ZQzEifV0sInZlcnNpb24iOjF9LCJtZmFfZW5hYmxlZCI6ZmFsc2UsInN0YXR1cyI6IkFDVElWRSJ9LCJhdXRoZW50aWNhdGlvblR5cGUiOiJzY29wZWRLZXkiLCJzY29wZWRLZXlLZXkiOiIxNjY5OTEwZDZmZWU4OTVhODY5NiIsInNjb3BlZEtleVNlY3JldCI6IjQwYzY0NzE2Y2UyY2RkNGQ2ZTI2MmMyMWNjZGYxNWQ0ZmRhODNiMGI1ZTA1MzE1YzNhZTEwOTQzYzAzYWY4ZjEiLCJleHAiOjE3ODc5NzMyMjB9.EOvpR8GsBk_NjdbdeUQiVHCBDbnrWLyCFsq124Og5JE",
+    "BackupPinning": true,
+    "MaxUploadSize": 104857600,
+    "TimeoutMinutes": 5,
+    "AlternativeGateways": [
+      "https://ipfs.io/ipfs",
+      "https://cloudflare-ipfs.com/ipfs",
+      "https://dweb.link/ipfs"
+    ]
+  },
+  
+  "Credits": {
+    "EmailDataWalletCost": 3,
+    "AttachmentWalletCost": 2,
+    "AuthorizationCost": 1,
+    "CreditServiceUrl": "https://api.rootz.global/credits",
+    "PaymentRequired": true
+  },
+  
+  "Email": {
+    "SmtpSettings": {
+      "Host": "smtp.office365.com",
+      "Port": 587,
+      "UseSsl": true,
+      "Username": "notifications@rootz.global",
+      "Password": "YOUR_EMAIL_PASSWORD_HERE"
+    },
+    "Templates": {
+      "AuthorizationRequest": "authorization-request.html",
+      "ProcessingComplete": "processing-complete.html",
+      "ProcessingFailed": "processing-failed.html"
+    },
+    "FromAddress": "notifications@rootz.global",
+    "FromName": "Rootz Email Data Wallet Service"
+  },
+  
+  "Security": {
+    "EncryptionKey": "RootzEmailWallet2025SecretKey123",
+    "HashSalt": "RootzSalt2025",
+    "RequireHttps": true,
+    "MaxRequestsPerMinute": 100,
+    "MaxRequestsPerHour": 1000,
+    "AllowedOrigins": [
+      "https://rootz.global",
+      "https://www.rootz.global", 
+      "https://api.rootz.global"
+    ],
+    "ApiKey": "rootz-email-wallet-api-key-2025"
+  },
+  
+  "VirusScanning": {
+    "Enabled": false,
+    "ClamAVUrl": "http://localhost:3310",
+    "MaxScanSize": 52428800,
+    "ScanTimeout": 30000,
+    "QuarantineDirectory": "/opt/email-wallet-service/quarantine"
+  },
+  
+  "Monitoring": {
+    "ApplicationInsightsKey": "",
+    "EnableDetailedLogging": true,
+    "LogRetentionDays": 30,
+    "AlertWebhook": ""
+  },
+  
+  "Jwt": {
+    "Key": "rootz_email_wallet_jwt_secret_key_that_is_very_long_and_secure_2025",
+    "Issuer": "api.rivetz.global",
+    "Audience": "rootz-email-service",
+    "ExpirationMinutes": 60
+  },
+  
+  "RateLimiting": {
+    "EmailProcessing": {
+      "PermitLimit": 10,
+      "Window": "00:01:00",
+      "QueueLimit": 5
+    },
+    "Authorization": {
+      "PermitLimit": 5,
+      "Window": "00:01:00",
+      "QueueLimit": 2
+    }
+  },
+  
+  "FeatureFlags": {
+    "EnableAutoProcessing": false,
+    "EnableBatchProcessing": true,
+    "EnableAdvancedMetadataExtraction": true,
+    "EnableBlockchainVerification": true,
+    "EnableIPFSStorage": true,
+    "EnableVirusScanning": false,
+    "EnableCorporateAuthorization": true,
+    "EnableWhitelistProcessing": true
+  },
+
+  "Swagger": {
+    "Title": "Email Wallet Blockchain Service API",
+    "Version": "v1",
+    "Description": "Blockchain-based email data wallet service for the Rootz ecosystem",
+    "ContactName": "Rootz Support",
+    "ContactEmail": "support@rootz.global",
+    "ContactUrl": "https://rootz.global",
+    "EnableInProduction": true
+  },
+  
+  "HealthChecks": {
+    "Enabled": true,
+    "Timeout": "00:00:30",
+    "Checks": {
+      "Blockchain": true,
+      "IPFS": true,
+      "Database": true,
+      "Email": false
+    }
+  }
+}

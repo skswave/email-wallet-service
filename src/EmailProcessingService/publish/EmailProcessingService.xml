@@ -1,0 +1,176 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>EmailProcessingService</name>
+    </assembly>
+    <members>
+        <member name="T:EmailProcessingService.Contracts.IContractAbiService">
+            <summary>
+            Production-ready contract ABI management service
+            Handles loading and caching of contract ABIs for blockchain interactions
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Contracts.ContractAbiService.GetEmailWalletRegistrationAbi">
+            <summary>
+            Production ABI for EmailWalletRegistration contract
+            Contains only the functions we actually use for better maintainability
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Contracts.ContractAbiService.GetEmailDataWalletAbi">
+            <summary>
+            Production ABI for EmailDataWallet contract
+            Focuses on functions we can reliably use without complex types
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Contracts.ContractAbiService.GetAttachmentWalletAbi">
+            <summary>
+            Production ABI for AttachmentWallet contract
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Contracts.ContractAbiService.GetAuthorizationManagerAbi">
+            <summary>
+            Production ABI for AuthorizationManager contract
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.AuthorizationV2Controller.GetAuthorizationRequest(System.String)">
+            <summary>
+            Get authorization request details by request ID
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.AuthorizationV2Controller.GetUserRequests(System.String)">
+            <summary>
+            Get all authorization requests for a specific user
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.AuthorizationV2Controller.GetUserCredits(System.String)">
+            <summary>
+            Get user credit balance
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.AuthorizationV2Controller.AuthorizeRequest(EmailProcessingService.Controllers.AuthorizeRequestModel)">
+            <summary>
+            Process user authorization (frontend calls this after MetaMask signature)
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.AuthorizationV2Controller.RejectRequest(EmailProcessingService.Controllers.RejectRequestModel)">
+            <summary>
+            Process user rejection (frontend calls this after rejection modal)
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.AuthorizationV2Controller.CreateAuthorizationRequest(EmailProcessingService.Controllers.CreateAuthorizationRequestModel)">
+            <summary>
+            Admin endpoint: Create new authorization request
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.BlockchainTestController.GetBlockchainStatus">
+            <summary>
+            Test blockchain connectivity and contract status
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.BlockchainTestController.IsWalletRegistered(System.String)">
+            <summary>
+            Check if a wallet is registered
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.BlockchainTestController.GetWalletCredits(System.String)">
+            <summary>
+            Get wallet credit balance and POL balance
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.BlockchainTestController.TestAuthorization(EmailProcessingService.Controllers.TestAuthorizationRequest)">
+            <summary>
+            Test authorization functionality with enhanced contract
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.BlockchainTestController.GetServiceHealth">
+            <summary>
+            Get service health including enhanced contract integration
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.ProcessEmailAsync(EmailProcessingService.Controllers.ProcessEmailRequest)">
+            <summary>
+            Process an incoming email from raw email content
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.UploadEmailAsync(Microsoft.AspNetCore.Http.IFormFile)">
+            <summary>
+            Process an email file upload
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.GetTaskStatusAsync(System.String)">
+            <summary>
+            Get the status of an email processing task
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.GetWalletTasksAsync(System.String)">
+            <summary>
+            Get all tasks for a specific wallet address
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.AuthorizeTaskAsync(System.String,EmailProcessingService.Controllers.AuthorizeTaskRequest)">
+            <summary>
+            Authorize a pending email processing task
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.GetWalletInfoAsync(System.String)">
+            <summary>
+            Get wallet information and credits
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.HealthCheckAsync">
+            <summary>
+            Health check endpoint
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.EmailProcessingController.GetStatsAsync">
+            <summary>
+            Get processing statistics
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.ValidateIpfsHash(EmailProcessingService.Controllers.IpfsValidationRequest)">
+            <summary>
+            Validate any IPFS hash - automatically detects content type
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.ValidateEmailDataPackage(EmailProcessingService.Controllers.IpfsValidationRequest)">
+            <summary>
+            Validate email data package from IPFS
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.ValidateAttachmentPackage(EmailProcessingService.Controllers.IpfsValidationRequest)">
+            <summary>
+            Validate attachment package from IPFS
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.ValidateMultipleHashes(EmailProcessingService.Controllers.BatchValidationRequest)">
+            <summary>
+            Validate multiple IPFS hashes at once
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.ValidateEmailProcessingTask(System.String)">
+            <summary>
+            Validate complete email processing task with all IPFS content
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.GetIpfsContent(System.String,System.Boolean)">
+            <summary>
+            Download and display IPFS content for inspection
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.TestIpfsIntegration(EmailProcessingService.Controllers.IpfsTestRequest)">
+            <summary>
+            Test IPFS connectivity and upload/download capability
+            </summary>
+        </member>
+        <member name="M:EmailProcessingService.Controllers.IpfsValidationController.GetValidationStats(System.Nullable{System.DateTime})">
+            <summary>
+            Get validation statistics for monitoring
+            </summary>
+        </member>
+        <member name="T:EmailProcessingService.Services.IProductionBlockchainService">
+            <summary>
+            Production-ready blockchain service with proper error handling and scalability
+            </summary>
+        </member>
+    </members>
+</doc>

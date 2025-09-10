@@ -8,7 +8,7 @@ namespace EmailProcessingService.Controllers
 {
     [ApiController]
     [Route("api/blockchaintest")]
-    [EnableCors("EmailWalletPolicy")]
+    [EnableCors]
     public class BlockchainTestController : ControllerBase
     {
         private readonly ILogger<BlockchainTestController> _logger;

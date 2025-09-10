@@ -10,7 +10,7 @@ namespace EmailProcessingService.Controllers
 {
     [ApiController]
     [Route("api/authorization")]
-    [EnableCors("EmailWalletPolicy")]
+    [EnableCors]
     public class AuthorizationV2Controller : ControllerBase
     {
         private readonly ILogger<AuthorizationV2Controller> _logger;

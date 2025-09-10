@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure URLs explicitly
-builder.WebHost.UseUrls("https://localhost:7000", "http://localhost:5000");
+// builder.WebHost.UseUrls("https://localhost:7000", "http://localhost:5000");
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -149,14 +149,14 @@ builder.Services.AddSwaggerGen(c =>
     // Add multiple server configurations for testing
     c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
     {
-        Url = "https://localhost:7000",
-        Description = "HTTPS endpoint"
+    Url = "https://rootz.global:7000",
+    Description = "HTTPS endpoint"
     });
-    
+
     c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
     {
-        Url = "http://localhost:5000", 
-        Description = "HTTP endpoint"
+    Url = "http://rootz.global:5000",
+    Description = "HTTP endpoint"
     });
     
     // Add XML documentation if available
@@ -186,10 +186,10 @@ app.UseSwaggerUI(c =>
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
+
 }
 
-app.UseHttpsRedirection();
-app.UseCors();
+// app.UseHttpsRedirection(); // Disabled for mixed content compatibility
 
 // Enable static files for web interfaces
 // Configure default files first
