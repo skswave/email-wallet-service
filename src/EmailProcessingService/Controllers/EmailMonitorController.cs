@@ -12,13 +12,13 @@ namespace EmailProcessingService.Controllers
     {
         private readonly ILogger<EmailMonitorController> _logger;
         private readonly IImapEmailMonitorService _imapService;
-        private readonly INotificationService _notificationService;
+        private readonly IExtendedNotificationService _notificationService;
         private readonly IEmailProcessingService _emailProcessingService;
 
         public EmailMonitorController(
             ILogger<EmailMonitorController> logger,
             IImapEmailMonitorService imapService,
-            INotificationService notificationService,
+            IExtendedNotificationService notificationService,
             IEmailProcessingService emailProcessingService)
         {
             _logger = logger;

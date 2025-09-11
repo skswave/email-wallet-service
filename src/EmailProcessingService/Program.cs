@@ -66,7 +66,8 @@ builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>();
 
 // Add MVP implementations - Authorization & Notifications
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
-builder.Services.AddScoped<INotificationService, SimpleNotificationService>();
+builder.Services.AddScoped<INotificationService, EmailNotificationService>();
+builder.Services.AddScoped<IExtendedNotificationService, EmailNotificationService>();
 
 // Add IMAP Email Monitoring Services - NEW
 builder.Services.AddScoped<IImapEmailMonitorService, ImapEmailMonitorService>();

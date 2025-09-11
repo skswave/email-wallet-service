@@ -7,17 +7,16 @@ using System.Text.Json;
 
 namespace EmailProcessingService.Services
 {
-    public interface INotificationService
+    // Extending the existing INotificationService interface
+    public interface IExtendedNotificationService : INotificationService
     {
-        Task SendAuthorizationNotificationAsync(AuthorizationRequest request);
-        Task SendCompletionNotificationAsync(EmailProcessingTask task);
         Task SendProcessingFailedNotificationAsync(EmailProcessingTask task);
         Task SendTestEmailAsync(string toAddress, string subject, string message);
     }
 
-    public class SimpleNotificationService : INotificationService
+    public class EmailNotificationService : INotificationService, IExtendedNotificationService
     {
-        private readonly ILogger<SimpleNotificationService> _logger;
+        private readonly ILogger<EmailNotificationService> _logger;
         private readonly IConfiguration _configuration;
         private readonly string _smtpHost;
         private readonly int _smtpPort;
@@ -28,8 +27,8 @@ namespace EmailProcessingService.Services
         private readonly string _password;
         private readonly bool _enabled;
 
-        public SimpleNotificationService(
-            ILogger<SimpleNotificationService> logger,
+        public EmailNotificationService(
+            ILogger<EmailNotificationService> logger,
             IConfiguration configuration)
         {
             _logger = logger;
@@ -47,7 +46,7 @@ namespace EmailProcessingService.Services
             _fromName = emailConfig["FromName"] ?? "Rootz Email Data Wallet Service";
             _enabled = emailConfig.GetValue<bool>("NotificationsEnabled", true);
 
-            _logger.LogInformation("Notification service configured: {FromAddress} via {SmtpHost}:{SmtpPort} (Enabled: {Enabled})", 
+            _logger.LogInformation("Email notification service configured: {FromAddress} via {SmtpHost}:{SmtpPort} (Enabled: {Enabled})", 
                 _fromAddress, _smtpHost, _smtpPort, _enabled);
         }
 

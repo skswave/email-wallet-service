@@ -115,8 +115,8 @@
       "Host": "smtp.office365.com",
       "Port": 587,
       "UseSsl": true,
-      "Username": "notifications@rootz.global",
-      "Password": "YOUR_NOTIFICATIONS_EMAIL_PASSWORD"
+      "Username": "process@rivetz.com",
+      "Password": "YOUR_PROCESS_EMAIL_PASSWORD"
     },
     "Imap": {
       "Server": "outlook.office365.com",
@@ -132,7 +132,7 @@
       "ProcessingComplete": "processing-complete.html",
       "ProcessingFailed": "processing-failed.html"
     },
-    "FromAddress": "notifications@rootz.global",
+    "FromAddress": "process@rivetz.com",
     "FromName": "Rootz Email Data Wallet Service",
     "NotificationsEnabled": true,
     "DefaultNotificationEmail": "steven@sprague.com",
