@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Wallet Registration - Rootz Innovation</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
             --primary: #2d5016;
@@ -319,7 +319,7 @@
 
     <script>
         const CONFIG = {
-            API_BASE_URL: '/api'
+            API_BASE_URL: `${window.location.origin}:5000/api`
         };
 
         let provider = null;
@@ -359,8 +359,8 @@
 
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
                 
-                provider = new ethers.BrowserProvider(window.ethereum);
-                signer = await provider.getSigner();
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                signer = provider.getSigner();
                 userAddress = await signer.getAddress();
 
                 document.getElementById('walletStatus').innerHTML = `

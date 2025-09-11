@@ -574,7 +574,7 @@
         // Live API Integration for Email DATA_WALLET Service
         class EmailWalletAPI {
             constructor() {
-                this.API_BASE = window.location.origin; // Uses nginx proxy
+                this.API_BASE = `${window.location.origin}:5000/api`; // Direct API connection
                 this.updateInterval = 30000; // 30 seconds
                 this.retryAttempts = 3;
                 this.retryDelay = 5000;

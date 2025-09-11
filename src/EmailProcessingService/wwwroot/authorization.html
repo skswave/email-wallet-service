@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email DATA_WALLET Authorization - Rootz Innovation</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <style>
         :root {
             --primary: #2d5016;
@@ -478,7 +478,7 @@
     <script>
         // Configuration
         const CONFIG = {
-            API_BASE_URL: '/api',
+            API_BASE_URL: `${window.location.origin}:5000/api`,
             REQUEST_ID: new URLSearchParams(window.location.search).get('requestId') || 'demo-request-123'
         };
 
@@ -514,9 +514,9 @@
         async function initializePage() {
             try {
                 if (typeof window.ethereum !== 'undefined') {
-                    provider = new ethers.BrowserProvider(window.ethereum);
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
                     await window.ethereum.request({ method: 'eth_requestAccounts' });
-                    signer = await provider.getSigner();
+                    signer = provider.getSigner();
                     userAddress = await signer.getAddress();
                     
                     document.getElementById('walletAddress').textContent = 

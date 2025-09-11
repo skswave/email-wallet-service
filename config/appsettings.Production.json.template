@@ -1,46 +1,99 @@
 {
-  "Logging": {
-    "LogLevel": {
-      "Default": "Information",
-      "Microsoft.AspNetCore": "Warning",
-      "Microsoft.EntityFrameworkCore": "Warning"
-    },
-    "Console": {
-      "IncludeScopes": false
-    },
-    "File": {
-      "Path": "/opt/email-wallet-service/logs/email-wallet-{Date}.log",
-      "LogLevel": {
-        "Default": "Information"
-      },
-      "RetainedFileCountLimit": 30,
-      "FileSizeLimitBytes": 10485760
-    }
+  "Urls": "http://0.0.0.0:5000;https://0.0.0.0:7000",
+  "ConnectionStrings": {
+    "DefaultConnection": "InMemory",
+    "Redis": "localhost:6379"
   },
-  "AllowedHosts": "*",
-  "Urls": "http://localhost:5000",
-  
+  "Serilog": {
+    "Using": [ "Serilog.Sinks.Console", "Serilog.Sinks.File" ],
+    "MinimumLevel": {
+      "Default": "Information",
+      "Override": {
+        "Microsoft": "Warning",
+        "System": "Warning",
+        "EmailProcessingService.Services.BlockchainService": "Information",
+        "EmailProcessingService.Services.IpfsService": "Information",
+        "EmailProcessingService.Services.ImapEmailMonitorService": "Information"
+      }
+    },
+    "WriteTo": [
+      {
+        "Name": "Console",
+        "Args": {
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"
+        }
+      },
+      {
+        "Name": "File",
+        "Args": {
+          "path": "logs/emailprocessing-.log",
+          "rollingInterval": "Day",
+          "outputTemplate": "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext}: {Message:lj}{NewLine}{Exception}"
+        }
+      }
+    ]
+  },
+  "EmailProcessing": {
+    "MaxEmailSize": 26214400,
+    "MaxAttachmentCount": 10,
+    "MaxAttachmentSize": 10485760,
+    "AllowedFileTypes": [
+      ".pdf",
+      ".doc",
+      ".docx",
+      ".xls",
+      ".xlsx",
+      ".txt",
+      ".jpg",
+      ".jpeg",
+      ".png",
+      ".zip"
+    ],
+    "AuthorizationBaseUrl": "https://rootz.global/.email-admin/authorization.html",
+    "AuthorizationTokenExpirationHours": 24,
+    "ProcessingTimeoutMinutes": 30
+  },
   "Blockchain": {
-    "Network": "polygon-amoy",
-    "RpcUrl": "https://rpc-amoy.polygon.technology",
-    "PrivateKey": "YOUR_SERVICE_WALLET_PRIVATE_KEY_HERE",
-    "ExplorerUrl": "https://amoy.polygonscan.com",
-    "GasLimit": 2000000,
-    "GasPrice": "20000000000",
-    "Contracts": {
+    "Network": "amoy",
+    "ChainId": 80002,
+    "RpcUrl": "https://rpc-amoy.polygon.technology/",
+    "EthereumRpcUrl": "https://mainnet.infura.io/v3/your_project_id",
+    "PolygonRpcUrl": "https://rpc-amoy.polygon.technology/",
+    "TestWallet": {
+      "Address": "0x107C5655ce50AB9744Fc36A4e9935E30d4923d0b",
+      "PrivateKey": "REPLACE_WITH_YOUR_TEST_WALLET_PRIVATE_KEY"
+    },
+    "EnableRealTransactions": true,
+    "ContractAddresses": {
       "EmailWalletRegistration": "0x71C1d6a0DAB73b25dE970E032bafD42a29dC010F",
       "EmailDataWallet": "0x52eBB3761D36496c29FB6A3D5354C449928A4048",
       "AttachmentWallet": "0x5e0e2d3FE611e4FA319ceD3f2CF1fe7EdBb5Dbb7",
-      "AuthorizationManager": "0x555ba5C1ff253c1D91483b52F1906670608fE9bC"
-    }
+      "AuthorizationManager": "0xcC2a65A8870289B1d33bA741069cC2CEEA219573",
+      "EnhancedAuthorization": "0xec695CcD7BC3f084356DD7Cf62ddE56b484A8A1a"
+    },
+    "Version": "2.0-Enhanced",
+    "ServiceWallet": "0xE2d0E252E7da22901bd1ffDD012Da2c77aC3033a",
+    "RegistrationFee": "0.01",
+    "RegistrationFeeWei": "10000000000000000",
+    "GasLimitMultiplier": 1.2,
+    "MaxGasPrice": "50000000000",
+    "ConfirmationBlocks": 3,
+    "ExplorerUrl": "https://amoy.polygonscan.com"
   },
-  
+  "EmailWallet": {
+    "EmailCost": 3,
+    "AttachmentCost": 2,
+    "ProcessingCost": 1,
+    "DefaultExpiryDays": 30,
+    "MaxExpiryDays": 365,
+    "MinExpiryDays": 1
+  },
   "IPFS": {
     "ApiUrl": "https://api.pinata.cloud",
     "GatewayUrl": "https://gateway.pinata.cloud/ipfs",
-    "PinataApiKey": "YOUR_PINATA_API_KEY_HERE",
-    "PinataSecretKey": "YOUR_PINATA_SECRET_KEY_HERE",
-    "PinataJWT": "YOUR_PINATA_JWT_TOKEN_HERE",
+    "PinataApiKey": "YOUR_PINATA_API_KEY",
+    "PinataSecretKey": "YOUR_PINATA_SECRET_KEY",
+    "PinataJWT": "YOUR_PINATA_JWT_TOKEN",
     "BackupPinning": true,
     "MaxUploadSize": 104857600,
     "TimeoutMinutes": 5,
@@ -50,7 +103,6 @@
       "https://dweb.link/ipfs"
     ]
   },
-  
   "Credits": {
     "EmailDataWalletCost": 3,
     "AttachmentWalletCost": 2,
@@ -58,72 +110,97 @@
     "CreditServiceUrl": "https://api.rootz.global/credits",
     "PaymentRequired": true
   },
-  
   "Email": {
     "SmtpSettings": {
       "Host": "smtp.office365.com",
       "Port": 587,
       "UseSsl": true,
       "Username": "notifications@rootz.global",
-      "Password": "YOUR_EMAIL_PASSWORD_HERE"
+      "Password": "YOUR_NOTIFICATIONS_EMAIL_PASSWORD"
+    },
+    "Imap": {
+      "Server": "outlook.office365.com",
+      "Port": 993,
+      "UseSsl": true,
+      "Username": "process@rivetz.com",
+      "Password": "YOUR_PROCESS_EMAIL_PASSWORD",
+      "PollIntervalMinutes": 1,
+      "Enabled": true
     },
     "Templates": {
       "AuthorizationRequest": "authorization-request.html",
       "ProcessingComplete": "processing-complete.html",
-      "ErrorNotification": "error-notification.html"
+      "ProcessingFailed": "processing-failed.html"
     },
-    "From": {
-      "Address": "notifications@rootz.global",
-      "DisplayName": "Rootz Email Wallet Service"
+    "FromAddress": "notifications@rootz.global",
+    "FromName": "Rootz Email Data Wallet Service",
+    "NotificationsEnabled": true,
+    "DefaultNotificationEmail": "steven@sprague.com",
+    "UserNotifications": {
+      "0x107C5655ce50AB9744Fc36A4e9935E30d4923d0b": "steven@sprague.com"
     }
   },
-  
   "Security": {
-    "RequireHttps": true,
-    "AllowedOrigins": [
-      "https://rootz.global",
-      "https://www.rootz.global",
-      "https://api.rootz.global"
-    ],
-    "ApiKey": "YOUR_API_KEY_HERE",
-    "RateLimit": {
-      "Enabled": true,
-      "RequestsPerMinute": 100,
-      "BurstSize": 20
-    }
+    "EncryptionKey": "YOUR_32_CHAR_ENCRYPTION_KEY_HERE_12345",
+    "HashSalt": "YOUR_HASH_SALT_HERE_FOR_SECURITY",
+    "RequireHttps": false,
+    "MaxRequestsPerMinute": 100,
+    "MaxRequestsPerHour": 1000
   },
-  
-  "Database": {
-    "ConnectionString": "Data Source=/opt/email-wallet-service/data/emailwallet.db",
-    "Provider": "SQLite",
-    "EnableSensitiveDataLogging": false
+  "VirusScanning": {
+    "Enabled": false,
+    "ClamAVUrl": "http://localhost:3310",
+    "MaxScanSize": 52428800,
+    "ScanTimeout": 30000,
+    "QuarantineDirectory": "/var/quarantine"
   },
-  
-  "Swagger": {
-    "Title": "Email Wallet Blockchain Service API",
-    "Version": "v1",
-    "Description": "Blockchain-based email data wallet service for the Rootz ecosystem",
-    "ContactName": "Rootz Support",
-    "ContactEmail": "support@rootz.global",
-    "ContactUrl": "https://rootz.global",
-    "EnableInProduction": false
-  },
-  
-  "HealthChecks": {
-    "Enabled": true,
-    "Timeout": "00:00:30",
-    "Checks": {
-      "Blockchain": true,
-      "IPFS": true,
-      "Database": true,
-      "Email": false
-    }
-  },
-  
   "Monitoring": {
-    "MetricsEnabled": true,
-    "ApplicationInsights": {
-      "InstrumentationKey": "YOUR_APPLICATION_INSIGHTS_KEY_HERE"
+    "ApplicationInsightsKey": "your_app_insights_key",
+    "EnableDetailedLogging": true,
+    "LogRetentionDays": 30,
+    "AlertWebhook": "https://hooks.slack.com/your_webhook"
+  },
+  "Jwt": {
+    "Key": "your_super_secret_jwt_key_that_is_at_least_32_characters_long_for_production",
+    "Issuer": "emailprocessing.rootz.global",
+    "Audience": "rootz-email-service",
+    "ExpirationMinutes": 60
+  },
+  "RateLimiting": {
+    "EmailProcessing": {
+      "PermitLimit": 10,
+      "Window": "00:01:00",
+      "QueueLimit": 5
+    },
+    "Authorization": {
+      "PermitLimit": 5,
+      "Window": "00:01:00",
+      "QueueLimit": 2
     }
-  }
+  },
+  "FeatureFlags": {
+    "EnableAutoProcessing": true,
+    "EnableBatchProcessing": true,
+    "EnableAdvancedMetadataExtraction": true,
+    "EnableBlockchainVerification": true,
+    "EnableIPFSStorage": true,
+    "EnableVirusScanning": false,
+    "EnableCorporateAuthorization": true,
+    "EnableWhitelistProcessing": true,
+    "EnableEnhancedAuthFlow": true,
+    "EnableV2Dashboard": true,
+    "EnableImapMonitoring": true
+  },
+  "CORS": {
+    "AllowedOrigins": [
+      "http://rootz.global",
+      "https://rootz.global",
+      "http://localhost:3000",
+      "http://localhost:8080"
+    ],
+    "AllowedMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "AllowedHeaders": ["*"],
+    "AllowCredentials": true
+  },
+  "AllowedHosts": "*"
 }

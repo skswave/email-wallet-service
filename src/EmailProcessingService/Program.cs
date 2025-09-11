@@ -68,6 +68,10 @@ builder.Services.AddSingleton<ITaskRepository, InMemoryTaskRepository>();
 builder.Services.AddScoped<IAuthorizationService, AuthorizationService>();
 builder.Services.AddScoped<INotificationService, SimpleNotificationService>();
 
+// Add IMAP Email Monitoring Services - NEW
+builder.Services.AddScoped<IImapEmailMonitorService, ImapEmailMonitorService>();
+builder.Services.AddHostedService<ImapEmailMonitorService>();
+
 // Add existing placeholder implementations
 builder.Services.AddScoped<IUserRegistrationService, UserRegistrationService>();
 builder.Services.AddScoped<IWhitelistService, WhitelistService>();
@@ -135,9 +139,9 @@ builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
     {
-        Title = "Email Data Wallet Processing Service with IPFS",
-        Version = "v2.0",
-        Description = "API for processing emails into blockchain-verified data wallets stored on IPFS",
+        Title = "Email Data Wallet Processing Service with IMAP Monitoring",
+        Version = "v2.1",
+        Description = "API for processing emails into blockchain-verified data wallets with automated IMAP email monitoring",
         Contact = new Microsoft.OpenApi.Models.OpenApiContact
         {
             Name = "Rootz Support",
@@ -149,14 +153,14 @@ builder.Services.AddSwaggerGen(c =>
     // Add multiple server configurations for testing
     c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
     {
-    Url = "https://rootz.global:7000",
-    Description = "HTTPS endpoint"
+        Url = "https://rootz.global:7000",
+        Description = "HTTPS endpoint"
     });
 
     c.AddServer(new Microsoft.OpenApi.Models.OpenApiServer
     {
-    Url = "http://rootz.global:5000",
-    Description = "HTTP endpoint"
+        Url = "http://rootz.global:5000",
+        Description = "HTTP endpoint"
     });
     
     // Add XML documentation if available
@@ -174,9 +178,9 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {
-    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Email Data Wallet API v2.0");
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Email Data Wallet API v2.1");
     c.RoutePrefix = "swagger";
-    c.DocumentTitle = "Email Data Wallet Service API";
+    c.DocumentTitle = "Email Data Wallet Service API with IMAP Monitoring";
     c.DisplayRequestDuration();
     c.EnableTryItOutByDefault();
     c.DefaultModelsExpandDepth(1);
@@ -186,7 +190,6 @@ app.UseSwaggerUI(c =>
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
-
 }
 
 // app.UseHttpsRedirection(); // Disabled for mixed content compatibility
@@ -199,6 +202,7 @@ defaultFilesOptions.DefaultFileNames.Add("index.html");
 app.UseDefaultFiles(defaultFilesOptions);
 app.UseStaticFiles();
 
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -239,19 +243,41 @@ using (var scope = app.Services.CreateScope())
     {
         app.Logger.LogError(ex, "Failed to test IPFS connectivity on startup");
     }
+
+    // Test IMAP connectivity on startup
+    try
+    {
+        var imapService = scope.ServiceProvider.GetRequiredService<IImapEmailMonitorService>();
+        var imapConnected = await imapService.TestConnectionAsync();
+        
+        if (imapConnected)
+        {
+            app.Logger.LogInformation("IMAP email monitoring connectivity verified");
+        }
+        else
+        {
+            app.Logger.LogWarning("IMAP email monitoring connectivity test failed");
+        }
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogError(ex, "Failed to test IMAP connectivity on startup");
+    }
 }
 
 // Enhanced startup logging with Swagger info
-app.Logger.LogInformation("=== Email Processing Service with IPFS Starting ===");
+app.Logger.LogInformation("=== Email Processing Service with IMAP Monitoring Starting ===");
 app.Logger.LogInformation("API available at: https://localhost:7000 and http://localhost:5000");
 app.Logger.LogInformation("Swagger UI: https://localhost:7000/swagger");
 app.Logger.LogInformation("Swagger JSON: https://localhost:7000/swagger/v1/swagger.json");
 app.Logger.LogInformation("Health check: https://localhost:7000/health");
 app.Logger.LogInformation("IPFS Health check: https://localhost:7000/health/ipfs");
+app.Logger.LogInformation("Email Monitor API: https://localhost:7000/api/emailmonitor/status");
 app.Logger.LogInformation("Feature: IPFS Storage Integration - ENABLED");
 app.Logger.LogInformation("Feature: Blockchain Verification - ENABLED");
 app.Logger.LogInformation("Feature: Enhanced Email Processing - ENABLED");
+app.Logger.LogInformation("Feature: IMAP Email Monitoring - ENABLED");
 app.Logger.LogInformation("Feature: Swagger Documentation - ALWAYS ENABLED");
-app.Logger.LogInformation("===========================================");
+app.Logger.LogInformation("=================================================================");
 
 app.Run();
