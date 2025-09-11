@@ -4,12 +4,16 @@ using Microsoft.Extensions.Configuration;
 using MailKit.Net.Imap;
 using MailKit.Search;
 using MailKit;
+using MailKit.Security;
 using MimeKit;
 using EmailProcessingService.Models;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text;
 
 namespace EmailProcessingService.Services
 {
@@ -25,36 +29,49 @@ namespace EmailProcessingService.Services
         private readonly ILogger<ImapEmailMonitorService> _logger;
         private readonly IConfiguration _configuration;
         private readonly IEmailProcessingService _emailProcessingService;
+        private readonly HttpClient _httpClient;
         
         private readonly string _imapServer;
         private readonly int _imapPort;
         private readonly string _username;
-        private readonly string _password;
-        private readonly bool _useSsl;
+        private readonly string _clientId;
+        private readonly string _clientSecret;
+        private readonly string _tenantId;
         private readonly int _pollIntervalMinutes;
         private readonly bool _enabled;
+        private readonly bool _useOAuth2;
+
+        private string _accessToken = string.Empty;
+        private DateTime _tokenExpiry = DateTime.MinValue;
 
         public ImapEmailMonitorService(
             ILogger<ImapEmailMonitorService> logger,
             IConfiguration configuration,
-            IEmailProcessingService emailProcessingService)
+            IEmailProcessingService emailProcessingService,
+            HttpClient httpClient)
         {
             _logger = logger;
             _configuration = configuration;
             _emailProcessingService = emailProcessingService;
+            _httpClient = httpClient;
 
             // Read configuration
             var emailConfig = _configuration.GetSection("Email:Imap");
             _imapServer = emailConfig["Server"] ?? "outlook.office365.com";
             _imapPort = emailConfig.GetValue<int>("Port", 993);
             _username = emailConfig["Username"] ?? throw new ArgumentException("Email:Imap:Username not configured");
-            _password = emailConfig["Password"] ?? throw new ArgumentException("Email:Imap:Password not configured");
-            _useSsl = emailConfig.GetValue<bool>("UseSsl", true);
             _pollIntervalMinutes = emailConfig.GetValue<int>("PollIntervalMinutes", 1);
             _enabled = emailConfig.GetValue<bool>("Enabled", true);
 
-            _logger.LogInformation("IMAP Monitor configured for {Username} on {Server}:{Port} (Enabled: {Enabled})", 
-                _username, _imapServer, _imapPort, _enabled);
+            // OAuth2 configuration
+            var oauthConfig = _configuration.GetSection("Email:OAuth2");
+            _useOAuth2 = oauthConfig.GetValue<bool>("Enabled", false);
+            _clientId = oauthConfig["ClientId"] ?? "";
+            _clientSecret = oauthConfig["ClientSecret"] ?? "";
+            _tenantId = oauthConfig["TenantId"] ?? "";
+
+            _logger.LogInformation("IMAP Monitor configured for {Username} on {Server}:{Port} (OAuth2: {UseOAuth2}, Enabled: {Enabled})", 
+                _username, _imapServer, _imapPort, _useOAuth2, _enabled);
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -97,11 +114,28 @@ namespace EmailProcessingService.Services
             {
                 using var client = new ImapClient();
                 
-                await client.ConnectAsync(_imapServer, _imapPort, _useSsl);
+                await client.ConnectAsync(_imapServer, _imapPort, SecureSocketOptions.SslOnConnect);
                 _logger.LogDebug("IMAP connection test: Connected to {Server}:{Port}", _imapServer, _imapPort);
 
-                await client.AuthenticateAsync(_username, _password);
-                _logger.LogDebug("IMAP connection test: Authenticated as {Username}", _username);
+                if (_useOAuth2)
+                {
+                    var accessToken = await GetAccessTokenAsync();
+                    if (string.IsNullOrEmpty(accessToken))
+                    {
+                        _logger.LogError("Failed to obtain OAuth2 access token");
+                        return false;
+                    }
+
+                    var oauth2 = new SaslMechanismOAuth2(_username, accessToken);
+                    await client.AuthenticateAsync(oauth2);
+                    _logger.LogDebug("IMAP OAuth2 authentication successful for {Username}", _username);
+                }
+                else
+                {
+                    var password = _configuration["Email:Imap:Password"] ?? "";
+                    await client.AuthenticateAsync(_username, password);
+                    _logger.LogDebug("IMAP basic authentication successful for {Username}", _username);
+                }
 
                 var inbox = client.Inbox;
                 await inbox.OpenAsync(FolderAccess.ReadOnly);
@@ -119,6 +153,60 @@ namespace EmailProcessingService.Services
             }
         }
 
+        private async Task<string> GetAccessTokenAsync()
+        {
+            try
+            {
+                // Check if we have a valid token
+                if (!string.IsNullOrEmpty(_accessToken) && DateTime.UtcNow < _tokenExpiry.AddMinutes(-5))
+                {
+                    return _accessToken;
+                }
+
+                // Request new token using client credentials flow
+                var tokenEndpoint = $"https://login.microsoftonline.com/{_tenantId}/oauth2/v2.0/token";
+                
+                var requestBody = new List<KeyValuePair<string, string>>
+                {
+                    new("client_id", _clientId),
+                    new("client_secret", _clientSecret),
+                    new("scope", "https://outlook.office365.com/.default"),
+                    new("grant_type", "client_credentials")
+                };
+
+                var content = new FormUrlEncodedContent(requestBody);
+                var response = await _httpClient.PostAsync(tokenEndpoint, content);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    _logger.LogError("OAuth2 token request failed: {StatusCode} - {Error}", 
+                        response.StatusCode, errorContent);
+                    return string.Empty;
+                }
+
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var tokenResponse = JsonSerializer.Deserialize<TokenResponse>(responseContent);
+
+                if (tokenResponse?.access_token == null)
+                {
+                    _logger.LogError("OAuth2 token response missing access_token");
+                    return string.Empty;
+                }
+
+                _accessToken = tokenResponse.access_token;
+                _tokenExpiry = DateTime.UtcNow.AddSeconds(tokenResponse.expires_in - 300); // 5 min buffer
+
+                _logger.LogDebug("OAuth2 access token obtained, expires at {Expiry}", _tokenExpiry);
+                return _accessToken;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to obtain OAuth2 access token");
+                return string.Empty;
+            }
+        }
+
         public async Task<List<IncomingEmailMessage>> GetUnreadEmailsAsync()
         {
             var emails = new List<IncomingEmailMessage>();
@@ -127,8 +215,19 @@ namespace EmailProcessingService.Services
             {
                 using var client = new ImapClient();
                 
-                await client.ConnectAsync(_imapServer, _imapPort, _useSsl);
-                await client.AuthenticateAsync(_username, _password);
+                await client.ConnectAsync(_imapServer, _imapPort, SecureSocketOptions.SslOnConnect);
+
+                if (_useOAuth2)
+                {
+                    var accessToken = await GetAccessTokenAsync();
+                    var oauth2 = new SaslMechanismOAuth2(_username, accessToken);
+                    await client.AuthenticateAsync(oauth2);
+                }
+                else
+                {
+                    var password = _configuration["Email:Imap:Password"] ?? "";
+                    await client.AuthenticateAsync(_username, password);
+                }
 
                 var inbox = client.Inbox;
                 await inbox.OpenAsync(FolderAccess.ReadOnly);
@@ -165,8 +264,19 @@ namespace EmailProcessingService.Services
             {
                 using var client = new ImapClient();
                 
-                await client.ConnectAsync(_imapServer, _imapPort, _useSsl);
-                await client.AuthenticateAsync(_username, _password);
+                await client.ConnectAsync(_imapServer, _imapPort, SecureSocketOptions.SslOnConnect);
+
+                if (_useOAuth2)
+                {
+                    var accessToken = await GetAccessTokenAsync();
+                    var oauth2 = new SaslMechanismOAuth2(_username, accessToken);
+                    await client.AuthenticateAsync(oauth2);
+                }
+                else
+                {
+                    var password = _configuration["Email:Imap:Password"] ?? "";
+                    await client.AuthenticateAsync(_username, password);
+                }
 
                 var inbox = client.Inbox;
                 await inbox.OpenAsync(FolderAccess.ReadWrite);
@@ -196,12 +306,29 @@ namespace EmailProcessingService.Services
                 using var client = new ImapClient();
                 
                 // Connect to the server
-                await client.ConnectAsync(_imapServer, _imapPort, _useSsl, cancellationToken);
+                await client.ConnectAsync(_imapServer, _imapPort, SecureSocketOptions.SslOnConnect, cancellationToken);
                 _logger.LogDebug("Connected to IMAP server {Server}:{Port}", _imapServer, _imapPort);
 
                 // Authenticate
-                await client.AuthenticateAsync(_username, _password, cancellationToken);
-                _logger.LogDebug("Authenticated as {Username}", _username);
+                if (_useOAuth2)
+                {
+                    var accessToken = await GetAccessTokenAsync();
+                    if (string.IsNullOrEmpty(accessToken))
+                    {
+                        _logger.LogError("Failed to obtain OAuth2 access token for monitoring");
+                        return;
+                    }
+
+                    var oauth2 = new SaslMechanismOAuth2(_username, accessToken);
+                    await client.AuthenticateAsync(oauth2, cancellationToken);
+                    _logger.LogDebug("OAuth2 authenticated as {Username}", _username);
+                }
+                else
+                {
+                    var password = _configuration["Email:Imap:Password"] ?? "";
+                    await client.AuthenticateAsync(_username, password, cancellationToken);
+                    _logger.LogDebug("Basic authenticated as {Username}", _username);
+                }
 
                 // Open the inbox
                 var inbox = client.Inbox;
@@ -335,6 +462,13 @@ namespace EmailProcessingService.Services
             }
 
             return emailMessage;
+        }
+
+        private class TokenResponse
+        {
+            public string access_token { get; set; } = "";
+            public int expires_in { get; set; }
+            public string token_type { get; set; } = "";
         }
     }
 }
