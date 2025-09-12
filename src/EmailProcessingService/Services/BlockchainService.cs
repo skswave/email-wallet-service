@@ -1,4 +1,5 @@
 using EmailProcessingService.Models;
+using EmailProcessingService.Models.Blockchain;
 using EmailProcessingService.Utils;
 using Microsoft.Extensions.Options;
 using Nethereum.Web3;

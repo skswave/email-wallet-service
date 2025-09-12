@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using EmailProcessingService.Services;
 using EmailProcessingService.Models;
+using EmailProcessingService.Models.Blockchain;
 using System.ComponentModel.DataAnnotations;
 
 namespace EmailProcessingService.Controllers
@@ -312,49 +313,5 @@ namespace EmailProcessingService.Controllers
         }
     }
 
-    // Request models
-    public class UserRegistrationRequest
-    {
-        [Required]
-        public string WalletAddress { get; set; } = string.Empty;
-
-        [Required]
-        [EmailAddress]
-        public string EmailAddress { get; set; } = string.Empty;
-
-        [Required]
-        public string DisplayName { get; set; } = string.Empty;
-
-        public string? CorporateWallet { get; set; }
-
-        public string NetworkId { get; set; } = "80002"; // Polygon Amoy default
-    }
-
-    public class UpdateRegistrationRequest
-    {
-        public string? DisplayName { get; set; }
-        public UserRegistrationSettings? Settings { get; set; }
-        public List<string>? WhitelistedDomains { get; set; }
-    }
-
-    // Blockchain-specific models
-    public class BlockchainRegistrationParams
-    {
-        public string WalletAddress { get; set; } = string.Empty;
-        public string PrimaryEmail { get; set; } = string.Empty;
-        public List<string> AdditionalEmails { get; set; } = new();
-        public string ParentCorporateWallet { get; set; } = string.Empty;
-        public List<string> AuthorizationTxs { get; set; } = new();
-        public List<string> WhitelistedDomains { get; set; } = new();
-        public bool AutoProcessCC { get; set; } = false;
-        public decimal RegistrationFee { get; set; }
-    }
-
-    public class BlockchainRegistrationResult
-    {
-        public bool Success { get; set; }
-        public string RegistrationId { get; set; } = string.Empty;
-        public string TransactionHash { get; set; } = string.Empty;
-        public string? ErrorMessage { get; set; }
-    }
+    // Models now imported from EmailProcessingService.Models.Blockchain namespace
 }
