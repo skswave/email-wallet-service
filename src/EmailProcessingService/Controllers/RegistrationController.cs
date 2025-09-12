@@ -28,7 +28,7 @@ namespace EmailProcessingService.Controllers
         {
             try
             {
-                _logger.LogInformation("Processing user registration for wallet {WalletAddress} and email {EmailAddress}", 
+                _logger.LogInformation("BLOCKCHAIN: Processing registration for wallet {WalletAddress} and email {EmailAddress}", 
                     request.WalletAddress, request.EmailAddress);
 
                 // Validate the request
@@ -60,45 +60,15 @@ namespace EmailProcessingService.Controllers
                     });
                 }
 
-                // Check if user is already registered
-                var existingRegistration = await _userRegistrationService.GetRegistrationByWalletAsync(request.WalletAddress);
-                if (existingRegistration != null)
-                {
-                    _logger.LogInformation("Wallet {WalletAddress} is already registered, returning existing registration info", request.WalletAddress);
-                    return Ok(new
-                    {
-                        success = true,
-                        message = "Wallet is already registered",
-                        alreadyRegistered = true,
-                        transactionHash = existingRegistration.RegistrationTx,
-                        walletAddress = existingRegistration.WalletAddress,
-                        emailAddress = existingRegistration.EmailAddress,
-                        displayName = existingRegistration.DisplayName ?? "User",
-                        registeredAt = existingRegistration.RegisteredAt,
-                        creditsAllocated = 60,
-                        timestamp = DateTime.UtcNow
-                    });
-                }
-
-                // Check if email is already registered
-                var existingEmailRegistration = await _userRegistrationService.GetRegistrationByEmailAsync(request.EmailAddress);
-                if (existingEmailRegistration != null)
-                {
-                    return Conflict(new { 
-                        success = false,
-                        message = "Email address is already registered with a different wallet" 
-                    });
-                }
-
-                // Test blockchain connectivity and check balance
+                // Test blockchain connectivity first
                 try
                 {
                     await _blockchainService.TestConnectionAsync();
-                    _logger.LogInformation("Blockchain connectivity confirmed");
+                    _logger.LogInformation("BLOCKCHAIN: Connectivity confirmed");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Blockchain connectivity test failed");
+                    _logger.LogError(ex, "BLOCKCHAIN: Connectivity test failed");
                     return StatusCode(500, new { 
                         success = false,
                         message = "Blockchain service unavailable. Please try again later.",
@@ -106,57 +76,127 @@ namespace EmailProcessingService.Controllers
                     });
                 }
 
-                // Create user registration (local database only for now)
-                var registration = new UserRegistration
+                // Check if user is already registered on blockchain
+                var isAlreadyRegistered = await _blockchainService.IsWalletRegisteredAsync(request.WalletAddress);
+                if (isAlreadyRegistered)
+                {
+                    _logger.LogInformation("BLOCKCHAIN: Wallet {WalletAddress} is already registered", request.WalletAddress);
+                    
+                    return Ok(new
+                    {
+                        success = true,
+                        message = "Wallet is already registered on blockchain",
+                        alreadyRegistered = true,
+                        walletAddress = request.WalletAddress,
+                        emailAddress = request.EmailAddress,
+                        displayName = request.DisplayName,
+                        creditsAllocated = 60,
+                        blockchainNetwork = "Polygon Amoy Testnet",
+                        registrationType = "Blockchain Registration Contract",
+                        timestamp = DateTime.UtcNow
+                    });
+                }
+
+                // Check if email is already bound to another wallet
+                var existingWallet = await _blockchainService.GetWalletFromEmailAsync(request.EmailAddress);
+                if (!string.IsNullOrEmpty(existingWallet) && existingWallet != "0x0000000000000000000000000000000000000000")
+                {
+                    return Conflict(new { 
+                        success = false,
+                        message = $"Email address is already registered to wallet {existingWallet}" 
+                    });
+                }
+
+                // Get registration fee from contract
+                var registrationFee = await _blockchainService.GetRegistrationFeeAsync();
+                _logger.LogInformation("BLOCKCHAIN: Registration fee: {RegistrationFee} wei", registrationFee);
+
+                // Prepare registration parameters
+                var registrationParams = new BlockchainRegistrationParams
                 {
                     WalletAddress = request.WalletAddress,
-                    EmailAddress = request.EmailAddress.ToLowerInvariant(),
-                    DisplayName = request.DisplayName,
-                    ParentCorporateWallet = request.CorporateWallet,
-                    IsVerified = true, // For MVP, mark as verified immediately
-                    VerifiedAt = DateTime.UtcNow,
-                    RegisteredAt = DateTime.UtcNow,
-                    IsActive = true,
-                    Settings = new UserRegistrationSettings
-                    {
-                        AutoProcessWhitelistedEmails = false,
-                        RequireExplicitAuth = true,
-                        MaxEmailSize = 25 * 1024 * 1024, // 25MB
-                        MaxAttachmentCount = 10,
-                        AllowedFileTypes = new List<string> { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".jpg", ".png" },
-                        EnableVirusScanning = true,
-                        NotificationEmail = request.EmailAddress,
-                        TimeZone = "UTC"
-                    }
+                    PrimaryEmail = request.EmailAddress.ToLowerInvariant(),
+                    AdditionalEmails = new List<string>(),
+                    ParentCorporateWallet = request.CorporateWallet ?? "0x0000000000000000000000000000000000000000",
+                    AuthorizationTxs = new List<string>(),
+                    WhitelistedDomains = new List<string>(),
+                    AutoProcessCC = false,
+                    RegistrationFee = registrationFee
                 };
 
-                // Generate a registration transaction reference (not an actual blockchain tx for now)
-                var transactionHash = $"reg_local_{DateTime.UtcNow.Ticks}_{request.WalletAddress[2..8]}";
-                registration.RegistrationTx = transactionHash;
+                // Register on blockchain via service wallet (owner can register for users)
+                _logger.LogInformation("BLOCKCHAIN: Registering wallet {WalletAddress} with email {Email} on contract", 
+                    request.WalletAddress, request.EmailAddress);
 
-                // Store registration in local database
-                await _userRegistrationService.CreateRegistrationAsync(registration);
+                var blockchainResult = await _blockchainService.RegisterEmailWalletAsync(registrationParams);
 
-                _logger.LogInformation("User registration successful for wallet {WalletAddress} with local transaction {TransactionHash}", 
-                    request.WalletAddress, transactionHash);
+                if (!blockchainResult.Success)
+                {
+                    _logger.LogError("BLOCKCHAIN: Registration failed: {Error}", blockchainResult.ErrorMessage);
+                    return StatusCode(500, new {
+                        success = false,
+                        message = "Blockchain registration failed",
+                        error = blockchainResult.ErrorMessage,
+                        timestamp = DateTime.UtcNow
+                    });
+                }
+
+                _logger.LogInformation("BLOCKCHAIN: Registration successful for wallet {WalletAddress} with transaction {TransactionHash}", 
+                    request.WalletAddress, blockchainResult.TransactionHash);
+
+                // Store in local cache for fast lookups (optional)
+                try
+                {
+                    var localRegistration = new UserRegistration
+                    {
+                        WalletAddress = request.WalletAddress,
+                        EmailAddress = request.EmailAddress.ToLowerInvariant(),
+                        DisplayName = request.DisplayName,
+                        ParentCorporateWallet = request.CorporateWallet,
+                        IsVerified = true,
+                        VerifiedAt = DateTime.UtcNow,
+                        RegisteredAt = DateTime.UtcNow,
+                        IsActive = true,
+                        RegistrationTx = blockchainResult.TransactionHash,
+                        Settings = new UserRegistrationSettings
+                        {
+                            AutoProcessWhitelistedEmails = false,
+                            RequireExplicitAuth = true,
+                            MaxEmailSize = 25 * 1024 * 1024,
+                            MaxAttachmentCount = 10,
+                            AllowedFileTypes = new List<string> { ".pdf", ".doc", ".docx", ".xls", ".xlsx", ".txt", ".jpg", ".png" },
+                            EnableVirusScanning = true,
+                            NotificationEmail = request.EmailAddress,
+                            TimeZone = "UTC"
+                        }
+                    };
+
+                    await _userRegistrationService.CreateRegistrationAsync(localRegistration);
+                    _logger.LogInformation("BLOCKCHAIN: Local cache updated for wallet {WalletAddress}", request.WalletAddress);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "BLOCKCHAIN: Failed to update local cache, but blockchain registration successful");
+                }
 
                 return Ok(new
                 {
                     success = true,
-                    message = "Registration successful! You now have 60 credits to create EMAIL_WALLETs.",
-                    transactionHash = transactionHash,
+                    message = "Registration successful on Polygon blockchain! You now have 60 credits to create EMAIL_WALLETs.",
+                    transactionHash = blockchainResult.TransactionHash,
                     walletAddress = request.WalletAddress,
                     emailAddress = request.EmailAddress,
                     displayName = request.DisplayName,
                     creditsAllocated = 60,
+                    registrationFee = registrationFee,
                     blockchainNetwork = "Polygon Amoy Testnet",
-                    registrationType = "Local Database (Blockchain integration pending)",
+                    registrationType = "Blockchain Registration Contract",
                     timestamp = DateTime.UtcNow
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during user registration for wallet {WalletAddress}", request?.WalletAddress ?? "unknown");
+                _logger.LogError(ex, "BLOCKCHAIN: Error during registration for wallet {WalletAddress}", request?.WalletAddress ?? "unknown");
                 return StatusCode(500, new { 
                     success = false,
                     message = "Registration failed due to an internal error. Please try again.",
@@ -176,32 +216,33 @@ namespace EmailProcessingService.Controllers
                     return BadRequest(new { message = "Invalid wallet address format" });
                 }
 
-                var registration = await _userRegistrationService.GetRegistrationByWalletAsync(walletAddress);
+                _logger.LogInformation("BLOCKCHAIN: Checking registration for wallet {WalletAddress}", walletAddress);
+
+                // Check blockchain first (canonical source)
+                var isRegisteredOnChain = await _blockchainService.IsWalletRegisteredAsync(walletAddress);
                 
-                if (registration == null)
+                if (!isRegisteredOnChain)
                 {
                     return Ok(new { 
                         isRegistered = false,
-                        walletAddress = walletAddress 
+                        walletAddress = walletAddress,
+                        source = "blockchain" 
                     });
                 }
 
                 return Ok(new
                 {
                     isRegistered = true,
-                    walletAddress = registration.WalletAddress,
-                    emailAddress = registration.EmailAddress,
-                    isActive = registration.IsActive,
-                    isVerified = registration.IsVerified,
-                    registeredAt = registration.RegisteredAt,
-                    processedEmailCount = registration.ProcessedEmailCount,
-                    totalCreditsUsed = registration.TotalCreditsUsed
+                    walletAddress = walletAddress,
+                    isActive = true,
+                    isVerified = true,
+                    source = "blockchain"
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking registration for wallet {WalletAddress}", walletAddress);
-                return StatusCode(500, new { message = "Error checking registration" });
+                _logger.LogError(ex, "BLOCKCHAIN: Error checking registration for wallet {WalletAddress}", walletAddress);
+                return StatusCode(500, new { message = "Error checking registration", error = ex.Message });
             }
         }
 
@@ -215,117 +256,36 @@ namespace EmailProcessingService.Controllers
                     return BadRequest(new { message = "Invalid email address format" });
                 }
 
-                var registration = await _userRegistrationService.GetRegistrationByEmailAsync(email.ToLowerInvariant());
+                _logger.LogInformation("BLOCKCHAIN: Checking registration for email {Email}", email);
+
+                var normalizedEmail = email.ToLowerInvariant();
                 
-                if (registration == null)
+                // Check blockchain for email binding
+                var walletAddress = await _blockchainService.GetWalletFromEmailAsync(normalizedEmail);
+                
+                if (string.IsNullOrEmpty(walletAddress) || walletAddress == "0x0000000000000000000000000000000000000000")
                 {
                     return Ok(new { 
                         isRegistered = false,
-                        emailAddress = email 
+                        emailAddress = email,
+                        source = "blockchain" 
                     });
                 }
 
                 return Ok(new
                 {
                     isRegistered = true,
-                    walletAddress = registration.WalletAddress,
-                    emailAddress = registration.EmailAddress,
-                    isActive = registration.IsActive,
-                    isVerified = registration.IsVerified,
-                    registeredAt = registration.RegisteredAt
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking email registration for {Email}", email);
-                return StatusCode(500, new { message = "Error checking email registration" });
-            }
-        }
-
-        [HttpPut("{walletAddress}")]
-        public async Task<IActionResult> UpdateRegistration(string walletAddress, [FromBody] UpdateRegistrationRequest request)
-        {
-            try
-            {
-                if (!IsValidEthereumAddress(walletAddress))
-                {
-                    return BadRequest(new { message = "Invalid wallet address format" });
-                }
-
-                var registration = await _userRegistrationService.GetRegistrationByWalletAsync(walletAddress);
-                if (registration == null)
-                {
-                    return NotFound(new { message = "Registration not found" });
-                }
-
-                // Update allowed fields
-                if (!string.IsNullOrEmpty(request.DisplayName))
-                {
-                    // Update display name in settings or additional field
-                }
-
-                if (request.Settings != null)
-                {
-                    registration.Settings = request.Settings;
-                }
-
-                if (request.WhitelistedDomains != null)
-                {
-                    registration.WhitelistedDomains = request.WhitelistedDomains;
-                }
-
-                await _userRegistrationService.UpdateRegistrationAsync(registration);
-
-                _logger.LogInformation("Registration updated for wallet {WalletAddress}", walletAddress);
-
-                return Ok(new
-                {
-                    success = true,
-                    message = "Registration updated successfully",
-                    walletAddress = registration.WalletAddress,
-                    timestamp = DateTime.UtcNow
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error updating registration for wallet {WalletAddress}", walletAddress);
-                return StatusCode(500, new { message = "Error updating registration" });
-            }
-        }
-
-        [HttpDelete("{walletAddress}")]
-        public async Task<IActionResult> DeactivateRegistration(string walletAddress)
-        {
-            try
-            {
-                if (!IsValidEthereumAddress(walletAddress))
-                {
-                    return BadRequest(new { message = "Invalid wallet address format" });
-                }
-
-                var registration = await _userRegistrationService.GetRegistrationByWalletAsync(walletAddress);
-                if (registration == null)
-                {
-                    return NotFound(new { message = "Registration not found" });
-                }
-
-                registration.IsActive = false;
-                await _userRegistrationService.UpdateRegistrationAsync(registration);
-
-                _logger.LogInformation("Registration deactivated for wallet {WalletAddress}", walletAddress);
-
-                return Ok(new
-                {
-                    success = true,
-                    message = "Registration deactivated successfully",
                     walletAddress = walletAddress,
-                    timestamp = DateTime.UtcNow
+                    emailAddress = email,
+                    isActive = true,
+                    isVerified = true,
+                    source = "blockchain"
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deactivating registration for wallet {WalletAddress}", walletAddress);
-                return StatusCode(500, new { message = "Error deactivating registration" });
+                _logger.LogError(ex, "BLOCKCHAIN: Error checking email registration for {Email}", email);
+                return StatusCode(500, new { message = "Error checking email registration", error = ex.Message });
             }
         }
 
@@ -375,5 +335,26 @@ namespace EmailProcessingService.Controllers
         public string? DisplayName { get; set; }
         public UserRegistrationSettings? Settings { get; set; }
         public List<string>? WhitelistedDomains { get; set; }
+    }
+
+    // Blockchain-specific models
+    public class BlockchainRegistrationParams
+    {
+        public string WalletAddress { get; set; } = string.Empty;
+        public string PrimaryEmail { get; set; } = string.Empty;
+        public List<string> AdditionalEmails { get; set; } = new();
+        public string ParentCorporateWallet { get; set; } = string.Empty;
+        public List<string> AuthorizationTxs { get; set; } = new();
+        public List<string> WhitelistedDomains { get; set; } = new();
+        public bool AutoProcessCC { get; set; } = false;
+        public decimal RegistrationFee { get; set; }
+    }
+
+    public class BlockchainRegistrationResult
+    {
+        public bool Success { get; set; }
+        public string RegistrationId { get; set; } = string.Empty;
+        public string TransactionHash { get; set; } = string.Empty;
+        public string? ErrorMessage { get; set; }
     }
 }

@@ -30,6 +30,11 @@ namespace EmailProcessingService.Services
         Task<List<BlockchainEvent>> GetWalletEventsAsync(string walletAddress, DateTime? fromDate = null);
         Task<string> GetTransactionStatusAsync(string transactionHash);
         Task<bool> TestConnectionAsync();
+        
+        // New blockchain registration methods
+        Task<string> GetWalletFromEmailAsync(string email);
+        Task<decimal> GetRegistrationFeeAsync();
+        Task<BlockchainRegistrationResult> RegisterEmailWalletAsync(BlockchainRegistrationParams parameters);
     }
 
     public class BlockchainService : IBlockchainService
@@ -123,6 +128,205 @@ namespace EmailProcessingService.Services
                 return false;
             }
         }
+
+        // NEW BLOCKCHAIN REGISTRATION METHODS
+
+        /// <summary>
+        /// Check if a wallet is registered on the blockchain
+        /// </summary>
+        public async Task<bool> IsWalletRegisteredAsync(string walletAddress)
+        {
+            try
+            {
+                _logger.LogInformation("BLOCKCHAIN: Checking if wallet {WalletAddress} is registered", walletAddress);
+                
+                var contractAddress = _config.ContractAddresses.EmailWalletRegistration;
+                var web3 = new Web3(_config.RpcUrl);
+                var contract = web3.Eth.GetContract(GetRegistrationContractAbi(), contractAddress);
+                
+                var function = contract.GetFunction("isRegistered");
+                var result = await function.CallAsync<bool>(walletAddress);
+                
+                _logger.LogInformation("BLOCKCHAIN: Wallet {WalletAddress} registration status: {Status}", walletAddress, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BLOCKCHAIN: Error checking wallet registration for {WalletAddress}", walletAddress);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get wallet address from email
+        /// </summary>
+        public async Task<string> GetWalletFromEmailAsync(string email)
+        {
+            try
+            {
+                _logger.LogInformation("BLOCKCHAIN: Getting wallet address for email {Email}", email);
+                
+                var contractAddress = _config.ContractAddresses.EmailWalletRegistration;
+                var web3 = new Web3(_config.RpcUrl);
+                var contract = web3.Eth.GetContract(GetRegistrationContractAbi(), contractAddress);
+                
+                var function = contract.GetFunction("getWalletFromEmail");
+                var result = await function.CallAsync<string>(email);
+                
+                _logger.LogInformation("BLOCKCHAIN: Email {Email} bound to wallet {WalletAddress}", email, result);
+                return result ?? string.Empty;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BLOCKCHAIN: Error getting wallet for email {Email}", email);
+                return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Get registration fee from contract
+        /// </summary>
+        public async Task<decimal> GetRegistrationFeeAsync()
+        {
+            try
+            {
+                var contractAddress = _config.ContractAddresses.EmailWalletRegistration;
+                var web3 = new Web3(_config.RpcUrl);
+                var contract = web3.Eth.GetContract(GetRegistrationContractAbi(), contractAddress);
+                
+                var function = contract.GetFunction("registrationFee");
+                var result = await function.CallAsync<BigInteger>();
+                
+                return (decimal)result;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BLOCKCHAIN: Error getting registration fee");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Register email wallet on blockchain
+        /// </summary>
+        public async Task<BlockchainRegistrationResult> RegisterEmailWalletAsync(BlockchainRegistrationParams parameters)
+        {
+            try
+            {
+                _logger.LogInformation("BLOCKCHAIN: Registering wallet {WalletAddress} with email {Email}", 
+                    parameters.WalletAddress, parameters.PrimaryEmail);
+                
+                var contractAddress = _config.ContractAddresses.EmailWalletRegistration;
+                var account = GetServiceWalletAccount();
+                var web3 = new Web3(account, _config.RpcUrl);
+                var contract = web3.Eth.GetContract(GetRegistrationContractAbi(), contractAddress);
+                
+                var function = contract.GetFunction("registerEmailWallet");
+                
+                var receipt = await function.SendTransactionAndWaitForReceiptAsync(
+                    account.Address,
+                    new BigInteger(3000000), // Gas limit
+                    null, // Gas price (let network decide)
+                    new BigInteger(parameters.RegistrationFee), // Value (registration fee)
+                    parameters.PrimaryEmail,
+                    new string[] { }, // Additional emails (empty for now)
+                    parameters.ParentCorporateWallet,
+                    new byte[][] { }, // Authorization TXs (empty for now)
+                    new string[] { }, // Whitelisted domains (empty for now)
+                    parameters.AutoProcessCC
+                );
+                
+                _logger.LogInformation("BLOCKCHAIN: Registration successful: {TxHash}", receipt.TransactionHash);
+                
+                return new BlockchainRegistrationResult
+                {
+                    Success = true,
+                    TransactionHash = receipt.TransactionHash,
+                    RegistrationId = receipt.TransactionHash // Use TX hash as registration ID for now
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "BLOCKCHAIN: Error registering wallet {WalletAddress}", parameters.WalletAddress);
+                return new BlockchainRegistrationResult
+                {
+                    Success = false,
+                    ErrorMessage = ex.Message
+                };
+            }
+        }
+
+        /// <summary>
+        /// Get the service wallet account for blockchain operations
+        /// </summary>
+        private Account GetServiceWalletAccount()
+        {
+            if (_testAccount != null)
+            {
+                return _testAccount;
+            }
+            
+            // Fallback: try to use service wallet private key from config
+            if (!string.IsNullOrEmpty(_config.ServiceWalletPrivateKey))
+            {
+                return new Account(_config.ServiceWalletPrivateKey);
+            }
+            
+            throw new InvalidOperationException("No service wallet account available for blockchain operations");
+        }
+
+        /// <summary>
+        /// Get registration contract ABI
+        /// </summary>
+        private string GetRegistrationContractAbi()
+        {
+            return @"[
+                {
+                    ""type"": ""function"",
+                    ""name"": ""isRegistered"",
+                    ""inputs"": [{""name"": ""wallet"", ""type"": ""address""}],
+                    ""outputs"": [{""name"": """", ""type"": ""bool""}],
+                    ""stateMutability"": ""view""
+                },
+                {
+                    ""type"": ""function"",
+                    ""name"": ""getWalletFromEmail"",
+                    ""inputs"": [{""name"": ""email"", ""type"": ""string""}],
+                    ""outputs"": [{""name"": """", ""type"": ""address""}],
+                    ""stateMutability"": ""view""
+                },
+                {
+                    ""type"": ""function"",
+                    ""name"": ""registrationFee"",
+                    ""inputs"": [],
+                    ""outputs"": [{""name"": """", ""type"": ""uint256""}],
+                    ""stateMutability"": ""view""
+                },
+                {
+                    ""type"": ""function"",
+                    ""name"": ""registerEmailWallet"",
+                    ""inputs"": [
+                        {""name"": ""primaryEmail"", ""type"": ""string""},
+                        {""name"": ""additionalEmails"", ""type"": ""string[]""},
+                        {""name"": ""parentCorporateWallet"", ""type"": ""address""},
+                        {""name"": ""authorizationTxs"", ""type"": ""bytes32[]""},
+                        {""name"": ""whitelistedDomains"", ""type"": ""string[]""},
+                        {""name"": ""autoProcessCC"", ""type"": ""bool""}
+                    ],
+                    ""outputs"": [{""name"": ""registrationId"", ""type"": ""bytes32""}],
+                    ""stateMutability"": ""payable""
+                },
+                {
+                    ""type"": ""function"",
+                    ""name"": ""getCreditBalance"",
+                    ""inputs"": [{""name"": ""wallet"", ""type"": ""address""}],
+                    ""outputs"": [{""name"": """", ""type"": ""uint256""}],
+                    ""stateMutability"": ""view""
+                }
+            ]";
+        }
+
+        // EXISTING METHODS CONTINUE BELOW...
 
         public async Task<WalletRegistrationResult> RegisterEmailWalletAsync(WalletRegistrationRequest request)
         {
@@ -505,20 +709,6 @@ namespace EmailProcessingService.Services
                     IsValid = false,
                     ErrorMessage = ex.Message
                 };
-            }
-        }
-
-        public async Task<bool> IsWalletRegisteredAsync(string walletAddress)
-        {
-            try
-            {
-                var isRegisteredFunction = _registrationContract.GetFunction("isRegistered");
-                return await isRegisteredFunction.CallAsync<bool>(walletAddress);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking wallet registration for {WalletAddress}", walletAddress);
-                return false;
             }
         }
 
