@@ -490,16 +490,7 @@ namespace EmailProcessingService.Services
         }
     }
 
-    // Extended interface for user registration
-    public interface IUserRegistrationService
-    {
-        Task<UserRegistration?> GetRegistrationByEmailAsync(string email);
-        Task<UserRegistration?> GetRegistrationByWalletAsync(string walletAddress);
-        Task<bool> ValidateCorporateAuthorizationAsync(string corporateWallet, string userWallet);
-        Task CreateRegistrationAsync(UserRegistration registration);
-        Task UpdateRegistrationAsync(UserRegistration registration);
-        Task<List<UserRegistration>> GetAllRegistrationsAsync();
-    }
+
 
     // Placeholder interfaces for dependencies
     public interface IAuthorizationService
