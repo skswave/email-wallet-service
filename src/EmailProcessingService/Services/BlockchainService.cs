@@ -215,7 +215,7 @@ namespace EmailProcessingService.Services
             try
             {
                 _logger.LogInformation("BLOCKCHAIN: Registering wallet {WalletAddress} with email {Email}", 
-                    parameters.WalletAddress, parameters.PrimaryEmail);
+                    parameters.UserRegistrationWalletAddress, parameters.PrimaryEmailAddress);
                 
                 var contractAddress = _config.ContractAddresses.EmailWalletRegistration;
                 var account = GetServiceWalletAccount();
@@ -228,31 +228,31 @@ namespace EmailProcessingService.Services
                     account.Address,
                     new BigInteger(3000000), // Gas limit
                     null, // Gas price (let network decide)
-                    new BigInteger(parameters.RegistrationFee), // Value (registration fee)
-                    parameters.PrimaryEmail,
+                    new BigInteger(parameters.RegistrationFeeInWei), // Value (registration fee)
+                    parameters.PrimaryEmailAddress,
                     new string[] { }, // Additional emails (empty for now)
-                    parameters.ParentCorporateWallet,
+                    parameters.ParentCorporateWalletAddress,
                     new byte[][] { }, // Authorization TXs (empty for now)
                     new string[] { }, // Whitelisted domains (empty for now)
-                    parameters.AutoProcessCC
+                    parameters.AutoProcessCCEmails
                 );
                 
                 _logger.LogInformation("BLOCKCHAIN: Registration successful: {TxHash}", receipt.TransactionHash);
                 
                 return new BlockchainRegistrationResult
                 {
-                    Success = true,
-                    TransactionHash = receipt.TransactionHash,
-                    RegistrationId = receipt.TransactionHash // Use TX hash as registration ID for now
+                    IsRegistrationSuccessful = true,
+                    PolygonTransactionHash = receipt.TransactionHash,
+                    BlockchainRegistrationId = receipt.TransactionHash // Use TX hash as registration ID for now
                 };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "BLOCKCHAIN: Error registering wallet {WalletAddress}", parameters.WalletAddress);
+                _logger.LogError(ex, "BLOCKCHAIN: Error registering wallet {WalletAddress}", parameters.UserRegistrationWalletAddress);
                 return new BlockchainRegistrationResult
                 {
-                    Success = false,
-                    ErrorMessage = ex.Message
+                    IsRegistrationSuccessful = false,
+                    RegistrationErrorMessage = ex.Message
                 };
             }
         }
@@ -268,9 +268,9 @@ namespace EmailProcessingService.Services
             }
             
             // Fallback: try to use service wallet private key from config
-            if (!string.IsNullOrEmpty(_config.ServiceWalletPrivateKey))
+            if (!string.IsNullOrEmpty(_config.TestWallet?.PrivateKey))
             {
-                return new Account(_config.ServiceWalletPrivateKey);
+                return new Account(_config.TestWallet.PrivateKey);
             }
             
             throw new InvalidOperationException("No service wallet account available for blockchain operations");

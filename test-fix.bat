@@ -1,24 +1,23 @@
 @echo off
-echo 🔧 Testing Build After FileProcessorService Fix
-echo ============================================
+echo Testing build after model property fixes...
 
-cd /d "C:\Users\StevenSprague\OneDrive - Rivetz Corp\Rootz\claud project\email-wallet-service-repo\src\EmailProcessingService"
+cd /d "C:\Users\StevenSprague\OneDrive - Rivetz Corp\Rootz\claud project\email-data-wallet-service\src\EmailProcessingService"
 
-echo.
-echo 🔨 Building with fixed FileProcessorService...
+echo Cleaning previous build...
+dotnet clean
+
+echo Building project...
 dotnet build --configuration Release
 
 if %ERRORLEVEL% EQU 0 (
     echo.
-    echo ✅ BUILD SUCCESS! All compilation errors fixed
+    echo ✅ BUILD SUCCESSFUL! All model property mismatches have been fixed.
     echo.
-    echo 🚀 Ready to push to GitHub and deploy!
-    echo.
+    echo You can now run fix-and-push.bat to commit and push the changes.
 ) else (
     echo.
-    echo ❌ BUILD STILL FAILING - Check remaining errors
-    echo.
+    echo ❌ BUILD FAILED! There are still compilation errors.
+    echo Please check the output above for remaining issues.
 )
 
-echo.
 pause

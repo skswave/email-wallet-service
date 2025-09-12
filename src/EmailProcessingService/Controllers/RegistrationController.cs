@@ -115,14 +115,14 @@ namespace EmailProcessingService.Controllers
                 // Prepare registration parameters
                 var registrationParams = new BlockchainRegistrationParams
                 {
-                    WalletAddress = request.WalletAddress,
-                    PrimaryEmail = request.EmailAddress.ToLowerInvariant(),
-                    AdditionalEmails = new List<string>(),
-                    ParentCorporateWallet = request.CorporateWallet ?? "0x0000000000000000000000000000000000000000",
-                    AuthorizationTxs = new List<string>(),
-                    WhitelistedDomains = new List<string>(),
-                    AutoProcessCC = false,
-                    RegistrationFee = registrationFee
+                    UserRegistrationWalletAddress = request.WalletAddress,
+                    PrimaryEmailAddress = request.EmailAddress.ToLowerInvariant(),
+                    AdditionalEmailAddresses = new List<string>(),
+                    ParentCorporateWalletAddress = request.CorporateWallet ?? "0x0000000000000000000000000000000000000000",
+                    AuthorizationTransactionHashes = new List<string>(),
+                    WhitelistedEmailDomains = new List<string>(),
+                    AutoProcessCCEmails = false,
+                    RegistrationFeeInWei = registrationFee
                 };
 
                 // Register on blockchain via service wallet (owner can register for users)
@@ -131,19 +131,19 @@ namespace EmailProcessingService.Controllers
 
                 var blockchainResult = await _blockchainService.RegisterEmailWalletAsync(registrationParams);
 
-                if (!blockchainResult.Success)
+                if (!blockchainResult.IsRegistrationSuccessful)
                 {
-                    _logger.LogError("BLOCKCHAIN: Registration failed: {Error}", blockchainResult.ErrorMessage);
+                    _logger.LogError("BLOCKCHAIN: Registration failed: {Error}", blockchainResult.RegistrationErrorMessage);
                     return StatusCode(500, new {
                         success = false,
                         message = "Blockchain registration failed",
-                        error = blockchainResult.ErrorMessage,
+                        error = blockchainResult.RegistrationErrorMessage,
                         timestamp = DateTime.UtcNow
                     });
                 }
 
                 _logger.LogInformation("BLOCKCHAIN: Registration successful for wallet {WalletAddress} with transaction {TransactionHash}", 
-                    request.WalletAddress, blockchainResult.TransactionHash);
+                    request.WalletAddress, blockchainResult.PolygonTransactionHash);
 
                 // Store in local cache for fast lookups (optional)
                 try
@@ -158,7 +158,7 @@ namespace EmailProcessingService.Controllers
                         VerifiedAt = DateTime.UtcNow,
                         RegisteredAt = DateTime.UtcNow,
                         IsActive = true,
-                        RegistrationTx = blockchainResult.TransactionHash,
+                        RegistrationTx = blockchainResult.PolygonTransactionHash,
                         Settings = new UserRegistrationSettings
                         {
                             AutoProcessWhitelistedEmails = false,
@@ -184,7 +184,7 @@ namespace EmailProcessingService.Controllers
                 {
                     success = true,
                     message = "Registration successful on Polygon blockchain! You now have 60 credits to create EMAIL_WALLETs.",
-                    transactionHash = blockchainResult.TransactionHash,
+                    transactionHash = blockchainResult.PolygonTransactionHash,
                     walletAddress = request.WalletAddress,
                     emailAddress = request.EmailAddress,
                     displayName = request.DisplayName,
